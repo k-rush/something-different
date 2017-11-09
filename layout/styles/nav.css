@@ -1,0 +1,53 @@
+@charset "utf-8";
+#navbar {
+	border-bottom: 1px solid black;
+}
+
+#nav {
+	float:none;
+	list-style:none;
+	height:100%;
+	padding-top: 3px;
+	text-align:center;
+	
+}
+#nav ul {
+	height:100%;
+	width:100%;
+	float:left; 
+	list-style:none;
+	display: inline;
+	padding:0 3% 0 0 ;
+	/* for visual troubleshooting  border:1px solid red */;
+}
+
+#nav li {
+	height:100%;
+	width:30%;
+	float:left; 
+	list-style:none;
+	display: inline;
+	padding:0 3% 0 0 ;
+	/* for visual troubleshooting  border:1px solid blue */;
+}
+
+#nav li a:link, #nav li a:visited, #nav li a:hover { 
+	
+
+	font-size:18px; 
+	text-transform:lowercase; 
+	text-decoration: bold;
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 300;
+	color:#000; 
+	background-color:#fff;
+	display: inline;
+
+}
+
+#nav .highlighted {
+	background-color:#000;
+}
+
+
+

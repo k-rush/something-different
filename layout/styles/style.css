@@ -1,0 +1,149 @@
+@charset "utf-8";
+
+@import url("nav.css");
+
+.body {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 300;
+   }
+
+div#content-container {
+    height: -webkit-calc(100vh - 130px);
+    height: -moz-calc(100vh - 130px);
+  	height: calc(100vh - 130px);
+}
+
+#header a:link, a:visited {  
+	color:#000;
+}
+#header a:hover {
+	color:#111;
+	text-decoration: none;
+}
+
+
+
+.img-circle {
+    border-radius: 50%;
+	display: block;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: 400px;
+        
+}
+
+#header{
+	
+	background: #fff;
+	margin: 0; padding: 0;
+	border-bottom: 1px solid #000;
+	
+}
+
+#header h1, h2, h3, h4 {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+}
+
+#header h1 {
+   	font: 38pt;
+   	color:#3B5998;
+   	text-align: center;
+   	font-weight: normal;
+}
+
+#header h2 {
+   	font-size: 15pt;
+   	color:#3B5998;
+   	text-align: center;
+   	line-height: normal;
+   	font-weight: normal;
+}
+
+#header h3 {
+   	text-align: center;
+   	font-size: 17pt;
+   	font-weight: normal;
+}
+
+#header h4 {
+   	text-align: center;
+   	font-size: 12pt;
+   	font-weight: normal;
+}
+
+
+
+/********************** HOME ******************************/
+#home {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 300;
+	background: #fff;
+	padding-top:2%;
+	height:100%;
+}
+#home h1, h2{
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 300;
+   	font-size:28pt;
+	text-align: center;
+	line-height: normal;
+}
+
+#home h2 {
+	font-size: 20px;
+	line-height: normal;
+
+}
+
+#home #home-meetings {
+	/* for visual troubleshooting  border:1px solid red; */
+	overflow-y:scroll;
+	max-height:-webkit-fill-available;
+}
+
+#home th {
+	border-bottom: 1px solid black;
+	text-align: left;
+	font-weight:normal;
+}
+
+#home td {
+	border: 0px;
+}
+
+#home h3, h4 {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 100;
+	text-align: center;
+}
+
+
+/********************** EVENTS ******************************/
+
+#home-events {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 300;
+	background: #fff;
+	padding-top:2%;
+	height:100%;
+}
+#home-events h1 {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 300;
+   	font-size:28pt;
+	text-align: center;
+}
+
+#home-events h2 {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   	font-weight: 300;
+	font-size: 20px;
+	line-height: 100%
+}
+
+/********************** CONTACT ******************************/
+
+
+#contact-content {
+	padding-top: 2%;
+}
