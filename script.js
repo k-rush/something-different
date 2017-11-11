@@ -1,10 +1,14 @@
 
 function onLoadHome() {
-  //debugger;
-  //initial build meetings table
-  buildMeetingsTable('day');
+
 };
 
+
+function onLoadLogin() {
+  //debugger;
+  $("#login-form").submit(function() {
+      alert("submit");
+  });
 };
 
 /** called after events page is loaded */
@@ -63,16 +67,19 @@ $(function() {
           $("#content-container").ready(function() {
             if(url == "home.html") onLoadHome();
             else if (url == "events.html") onLoadEvents();
+            else if (url == "login.html") onLoadLogin();
           });
 
         });
 
       }
+      /** THIS IS BAD OO! Every time you change or remove a link, you need to change this. WTF KYLE? */
       /** boldify nav links */
       $(".update-content").css("font-weight","normal");
       if (url == "home.html")  $("#navDiscussion").css("font-weight","bold");
       else if (url == "events.html")  $("#navEvents").css("font-weight","bold");
       else if (url == "contact.html")  $("#navContact").css("font-weight","bold");
+      else if (url == "login.html")  $("#navLogin").css("font-weight","bold");
     });
 
 
