@@ -9,12 +9,16 @@ function onLoadLogin() {
 
   //Bind event handler to make AJAX call to invoke API Gateway for login lambda function
   $("#login-form-submit").click(function() {
-      var formdata = $("#login-form").serialize();
+      var formdata = {};
+      formdata["username"] = $("#username").val();
+      //Hash and salt the password:
+      formdata["password"] = $("#password").val();
+      debugger;
       $.ajax( 
         {
-          method: "GET",
+          method: "POST",
           url: "https://526ej4381h.execute-api.us-west-2.amazonaws.com/prod/SD-login",
-          dataType: "json",
+          dataType: "text json",
           data: formdata,
           async:true, 
           success: function(data) {
