@@ -32,6 +32,15 @@ div#content-container {
         
 }
 
+.img-logo {
+	display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top:10%;
+    max-height: 100px;
+        
+}
+
 #header{
 	
 	background: #000;
@@ -62,12 +71,14 @@ div#content-container {
 #header h3 {
    	text-align: center;
    	font-size: 17pt;
+   	color:#3B5998;
    	font-weight: normal;
 }
 
 #header h4 {
    	text-align: center;
    	font-size: 12pt;
+   	color:#3B5998;
    	font-weight: normal;
 }
 
