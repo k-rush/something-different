@@ -6,8 +6,36 @@ function onLoadHome() {
 
 function onLoadLogin() {
   //debugger;
-  $("#login-form").submit(function() {
-      alert("submit");
+
+  //Bind event handler to make AJAX call to invoke API Gateway for login lambda function
+  $("#login-form-submit").click(function() {
+      var formdata = $("#login-form").serialize();
+      $.ajax( 
+        {
+          method: "GET",
+          url: "https://526ej4381h.execute-api.us-west-2.amazonaws.com/prod/SD-login",
+          dataType: "json",
+          data: formdata,
+          async:true, 
+          success: function(data) {
+            //Success callback of API call
+            alert("SUCCESS" + data);
+          },
+          error: function(data) {
+            //Error callback of API call
+            alert("ERROR" + JSON.stringify(data));
+          }
+
+        }
+      ).done(function(data) {
+        debugger;
+        alert(data);
+      });
+
+      /*$.get("https://526ej4381h.execute-api.us-west-2.amazonaws.com/prod/SD-login", function(data) {
+        alert(data);
+      });*/
+      
   });
 };
 
