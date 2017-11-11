@@ -18,7 +18,7 @@ function onLoadLogin() {
         {
           method: "POST",
           url: "https://526ej4381h.execute-api.us-west-2.amazonaws.com/prod/SD-login",
-          dataType: "text json",
+          dataType: "json",
           data: formdata,
           async:true, 
           success: function(data) {
@@ -107,11 +107,15 @@ $(function() {
       }
       /** THIS IS BAD OO! Every time you change or remove a link, you need to change this. WTF KYLE? */
       /** boldify nav links */
-      $(".update-content").css("font-weight","normal");
+      $(".update-content").each(function(index) {
+        if(this.hash.replace("#","") == url) $(this).css("font-weight","bold");
+        else $(this).css("font-weight","normal");
+      });
+      /*
       if (url == "home.html")  $("#navDiscussion").css("font-weight","bold");
       else if (url == "events.html")  $("#navEvents").css("font-weight","bold");
       else if (url == "contact.html")  $("#navContact").css("font-weight","bold");
-      else if (url == "login.html")  $("#navLogin").css("font-weight","bold");
+      else if (url == "login.html")  $("#navLogin").css("font-weight","bold");*/
     });
 
 
