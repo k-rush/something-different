@@ -5,17 +5,13 @@ function onLoadHome() {
     });
 };
 
-//Validates login token and runs callback function.
-function validateAndRun(callback) {
-
-  var tokendata = {'token': readCookie('token')};   
-    //$("#debug-div").append(logindata.username + " " + logindata.password + "<br>");
-
-    //Make API call to validate token (test)
+function onLoadPeople() {
+  validateAndRun(function(loginData) {
+    var tokendata = {'token': readCookie('token')}; 
     $.ajax( 
         {
           method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/validate-token",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/get-users",
           dataType: "json",
           data: JSON.stringify(tokendata),
           crossdomain: true,
@@ -24,7 +20,10 @@ function validateAndRun(callback) {
             //Success callback of API call
             
             console.log("SUCCESS " + JSON.stringify(data) + "\n");
-            callback(data);
+            data.forEach(function(element){
+              $("#people-content").append("Username: " + element.username + "  Name: " + element.firstname + " " + element.lastname + "  email: " + element.email + "<br>");
+            } );
+            
           },
           error: function(data) {
             //Error callback of API call
@@ -35,6 +34,39 @@ function validateAndRun(callback) {
 
         }
       );
+  });
+}
+
+//Validates login token and runs callback function.
+function validateAndRun(callback) {
+
+  var tokendata = {'token': readCookie('token')};   
+  //$("#debug-div").append(logindata.username + " " + logindata.password + "<br>");
+
+  //Make API call to validate token (test)
+  $.ajax( 
+      {
+        method: "POST",
+        url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/validate-token",
+        dataType: "json",
+        data: JSON.stringify(tokendata),
+        crossdomain: true,
+        async:true, 
+        success: function(data) {
+          //Success callback of API call
+          
+          console.log("SUCCESS " + JSON.stringify(data) + "\n");
+          callback(data);
+        },
+        error: function(data) {
+          //Error callback of API call
+          console.log("ERROR " + JSON.stringify(data));
+          window.location.hash = "#login.html";
+
+        }
+
+      }
+    );
 
 };
 
@@ -181,6 +213,7 @@ $(function() {
           else if (url == "events.html") onLoadEvents();
           else if (url == "login.html") onLoadLogin();
           else if (url == "register.html") onLoadRegister();
+          else if (url == "people.html") onLoadPeople();
         });
 
       });
