@@ -84,8 +84,9 @@ exports.handler = (event, context, callback) => {
                             
                             dynamo.putItem(params, function(err, data) {
                                 if(!err) sendVerificationEmail([parsedBody.email], "Email Verification for Something Different's home group website", url);
-                                done(err,data);
+                                
                             });
+                            done(null,data);
                             //NOTE: Email needs to be verified!
                         }
                         
@@ -132,9 +133,10 @@ function sendVerificationEmail(to, subject, data) {
        }
     }
     , function(err, data) {
-        done(err,null);
-            console.log('Email sent:');
-            console.log(data);
+            if(!err) {
+                console.log('Email sent:');
+                console.log(data);
+            }
      });
 } 
 

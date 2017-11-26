@@ -1,6 +1,14 @@
 
 function onLoadHome() {
-    var tokendata = {'token': readCookie('token')};   
+    validateAndRun(function(data) {
+      $("#home-content").append("Welcome " + data.firstname + "!<br>" + data.username + "<br>" + data.email);
+    });
+};
+
+//Validates login token and runs callback function.
+function validateAndRun(callback) {
+
+  var tokendata = {'token': readCookie('token')};   
     //$("#debug-div").append(logindata.username + " " + logindata.password + "<br>");
 
     //Make API call to validate token (test)
@@ -14,16 +22,20 @@ function onLoadHome() {
           async:true, 
           success: function(data) {
             //Success callback of API call
-            $("#home-content").append("Token validated. Username:" + data.username + " Email verified:" + data.verified + "Exp: " + data.expiration + "<br>");
-            console.log("SUCCESS " + data + "\n");
+            
+            console.log("SUCCESS " + JSON.stringify(data) + "\n");
+            callback(data);
           },
           error: function(data) {
             //Error callback of API call
-            console.log("ERROR " + data);
+            console.log("ERROR " + JSON.stringify(data));
+            window.location.hash = "#login.html";
+
           }
 
         }
       );
+
 };
 
 
@@ -98,6 +110,7 @@ function onLoadRegister() {
 
 /** called after events page is loaded */
 function onLoadEvents() {
+  validateAndRun(function(data) {
   /** Full calendarize the full calendar. */
   $('#calendar').fullCalendar({
       header: {
@@ -123,6 +136,7 @@ function onLoadEvents() {
       }
       
     });
+  });
   
 };
 
@@ -147,8 +161,7 @@ $(function() {
 
       });
 
-      
-
+    
       /** boldify nav links */
       $(".update-content").each(function(index) {
         if(this.hash.replace("#","") == url) $(this).css("font-weight","bold");
@@ -156,7 +169,6 @@ $(function() {
       });
 
     });
-
 
     $(window).hashchange();
 

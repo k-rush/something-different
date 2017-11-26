@@ -1,8 +1,14 @@
 'use strict';
 var crypto = require('crypto');
-console.log('Loading function');
 const key = 'hANtBs3yjrwkgK9g'; //CHANGE IN PRODUCTION SO IT CAN'T BE SCRUBBED FROM GITHUB
+const table = 'SD-user';
 
+var AWS = require('aws-sdk');
+AWS.config.update({region: 'us-west-2'});
+
+const doc = require('dynamodb-doc');
+
+const dynamo = new doc.DynamoDB();
 
 /**
  * Validates authentication token from client. Strictly used for testing purposes.
@@ -28,7 +34,34 @@ exports.handler = (event, context, callback) => {
             var decipheredToken = decipher.update(token, 'hex', 'utf8');
             decipheredToken += decipher.final('utf8');
             console.log('DECIPHERED TOKEN:' + decipheredToken);
-            done(null,JSON.parse(decipheredToken));
+
+            var queryParams = {
+                TableName : table,
+                KeyConditionExpression: "#username = :user",
+                ExpressionAttributeNames:{
+                    "#username": "username"
+                },
+                ExpressionAttributeValues: {
+                    ":user":JSON.parse(decipheredToken).username
+                }
+            };
+
+            dynamo.query(queryParams, function(err,data) {
+                if(err) {
+                    console.log(err);
+                    done(err,data);
+                }
+
+                else {
+                    console.log("QUERY RESULT:" + JSON.stringify(data.Items));
+                    if(data.Items.length == 0) {
+                        done({message:"Username or password incorrect."},data);
+                    }
+                    else {
+                        done(null,{username:data.Items[0].username,email:data.Items[0].email,firstname:data.Items[0].firstname,lastname:data.Items[0].lastname,verified:data.Items[0].verified});
+                    }
+                }
+            });
 
             break;
         default:
