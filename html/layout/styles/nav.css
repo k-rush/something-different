@@ -24,7 +24,7 @@
 /* You should make this auto-resizing if possible.  Shouldn't have to come mess with it every tiome you add a nav link. */
 #nav li {
 	height:100%;
-	width:20%;
+	width:15%;
 	float:left; 
 	list-style:none;
 	display: inline;

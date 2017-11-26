@@ -132,7 +132,7 @@ function sendVerificationEmail(to, subject, data) {
        }
     }
     , function(err, data) {
-        if(err) throw err;
+        done(err,null);
             console.log('Email sent:');
             console.log(data);
      });
