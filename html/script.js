@@ -1,7 +1,7 @@
 
 function onLoadHome() {
     validateAndRun(function(data) {
-      $("#home-content").append("Welcome " + data.firstname + "!<br>" + data.username + "<br>" + data.email);
+      $("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br><br>You are now authorized to view sensitive data.");
     });
 };
 
@@ -40,6 +40,7 @@ function validateAndRun(callback) {
 
 
 function onLoadLogin() {
+  //Make API call to validate token (test)
 
   //Bind event handler to make AJAX call to invoke API Gateway for login lambda function
   $("#login-form-submit").click(function() {
@@ -61,6 +62,7 @@ function onLoadLogin() {
             createCookie('token',data.token,1);
             createCookie('username',formdata['username'],1);
             console.log("SUCCESS " + JSON.stringify(data) + "\n");
+            window.location.hash = "#home.html";
           },
           error: function(data) {
             console.log("ERROR " + JSON.stringify(data));
@@ -96,6 +98,28 @@ function onLoadRegister() {
             async:true, 
             success: function(data) {
               console.log("SUCCESS" + JSON.stringify(data));
+              $.ajax( 
+                {
+                  method: "POST",
+                  url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/login",
+                  dataType: "json",
+                  data: JSON.stringify(formdata),
+                  crossdomain: true,
+                  async:true, 
+                  success: function(data) {
+                    $("#debug-div").append("Login Succeeded. TOKEN: " + data.token + "<br>");
+                    createCookie('token',data.token,1);
+                    createCookie('username',formdata['username'],1);
+                    console.log("SUCCESS " + JSON.stringify(data) + "\n");
+                    window.location.hash = "#home.html";
+                  },
+                  error: function(data) {
+                    console.log("ERROR " + JSON.stringify(data));
+                  }
+
+                }
+              );
+
             },
             error: function(data) {
               console.log("ERROR" + JSON.stringify(data));

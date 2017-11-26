@@ -63,7 +63,7 @@ exports.handler = (event, context, callback) => {
                             //Create new token.
                             var exptime = new Date().getTime() + 3600000; //current time + 1 hour
                             var cipher = crypto.createCipher('aes192',key); 
-                            var token = cipher.update(JSON.stringify({"username":data.Items[0].username,"verified":data.Items[0].verified,"expiration":exptime}), 'utf8', 'hex');
+                            var token = cipher.update(JSON.stringify({"username":data.Items[0].username,"expiration":exptime}), 'utf8', 'hex');
                             token += cipher.final('hex');
                             
                             done(null,{"token":token});
