@@ -1,7 +1,7 @@
 
 function onLoadHome() {
     validateAndRun(function(data) {
-      $("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br><br>You are now authorized to view sensitive data.");
+      $("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
     });
 };
 
@@ -21,7 +21,7 @@ function onLoadPeople() {
             
             console.log("SUCCESS " + JSON.stringify(data) + "\n");
             data.forEach(function(element){
-              $("#people-content").append("Username: " + element.username + "  Name: " + element.firstname + " " + element.lastname + "  email: " + element.email + "<br>");
+              $("#people-content").append("Username: " + element.username + "  Name: " + element.firstname + " " + element.lastname + "  email: " + element.email + " verified? " + element.verified + "<br>");
             } );
             
           },

@@ -11,7 +11,7 @@ const table = "SD-user";
 exports.handler = (event, context, callback) => {
 
     const done = (err, res) => callback(null, {
-        statusCode: err ? '400' : '200',
+        statusCode: err ? (err.code ? err.code : '400') : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
             'Content-Type': 'application/json',
@@ -25,10 +25,16 @@ exports.handler = (event, context, callback) => {
             const token = event.queryStringParameters.token;
             console.log("Token: " + token);
             const decipher = crypto.createDecipher('aes192',key);
-            var decipheredToken = decipher.update(token, 'hex', 'utf8');
-            decipheredToken += decipher.final('utf8');
-            console.log('DECIPHERED TOKEN:' + decipheredToken);
-            var parsedToken = JSON.parse(decipheredToken);
+            var decipheredToken = "";
+            var parsedToken = "";
+            try {
+                decipheredToken = decipher.update(token, 'hex', 'utf8');
+                decipheredToken += decipher.final('utf8');
+                console.log('DECIPHERED TOKEN:' + decipheredToken);
+                parsedToken = JSON.parse(decipheredToken);
+            } catch (err) {
+                callback(null, {statusCode: '403', body: "Could not decipher token", headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}});
+            }
             
             
             var params = {
@@ -45,6 +51,7 @@ exports.handler = (event, context, callback) => {
 
             dynamo.updateItem(params, function(err, data) {
                 if (err) {
+                    done(err,null);
                     console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
                 } else {
                     console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));

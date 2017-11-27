@@ -15,9 +15,9 @@ const dynamo = new doc.DynamoDB();
  */
 exports.handler = (event, context, callback) => {
 
-    const parsedBody = JSON.parse(event.body);
+    
     const done = (err, res) => callback(null, {
-        statusCode: err ? '400' : '200',
+        statusCode: err ? (err.code ? err.code : '400') : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
             'Content-Type': 'application/json',
@@ -28,12 +28,22 @@ exports.handler = (event, context, callback) => {
 
     switch (event.httpMethod) {
         case 'POST':
-            const token = JSON.parse(event.body).token;
-            console.log("Token: " + token);
-            const decipher = crypto.createDecipher('aes192',key);
-            var decipheredToken = decipher.update(token, 'hex', 'utf8');
-            decipheredToken += decipher.final('utf8');
-            console.log('DECIPHERED TOKEN:' + decipheredToken);
+            var username;
+            var parsedBody;
+
+            try {
+                parsedBody = JSON.parse(event.body);
+                const token = parsedBody.token;
+                console.log("Token: " + token);
+                const decipher = crypto.createDecipher('aes192',key);
+                var decipheredToken = decipher.update(token, 'hex', 'utf8');
+                decipheredToken += decipher.final('utf8');
+                console.log('DECIPHERED TOKEN:' + decipheredToken);
+            } catch(err) {
+                callback(null, {statusCode: '403', body: "Could not decipher token", headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}});
+            }
+            
+            username = JSON.parse(decipheredToken).username;
 
             var queryParams = {
                 TableName : table,
@@ -42,7 +52,7 @@ exports.handler = (event, context, callback) => {
                     "#username": "username"
                 },
                 ExpressionAttributeValues: {
-                    ":user":JSON.parse(decipheredToken).username
+                    ":user":username
                 }
             };
 
@@ -54,13 +64,13 @@ exports.handler = (event, context, callback) => {
 
                 else {
                     console.log("QUERY RESULT:" + JSON.stringify(data.Items));
-                    if(data.Items.length == 0) {
+                    if(data.Items.length === 0) {
                         done({message:"Username or password incorrect."},data);
                     }
                     else {
                         var scanParams = {
                             TableName: table,
-                            ProjectionExpression: "#u, firstname, lastname, email",
+                            ProjectionExpression: "#u, firstname, lastname, email, verified",
                             ExpressionAttributeNames: {
                                 "#u": "username",
                             }

@@ -24,7 +24,7 @@ exports.handler = (event, context, callback) => {
     console.log('username',JSON.parse(event.body).username);
     
     const done = (err, res) => callback(null, {
-        statusCode: err ? '400' : '200',
+        statusCode: err ? (err.code ? err.code : '400') : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
             'Content-Type': 'application/json',

@@ -17,7 +17,7 @@ exports.handler = (event, context, callback) => {
 
     const parsedBody = JSON.parse(event.body);
     const done = (err, res) => callback(null, {
-        statusCode: err ? '400' : '200',
+        statusCode: err ? (err.code ? err.code : '400') : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
             'Content-Type': 'application/json',
@@ -30,9 +30,16 @@ exports.handler = (event, context, callback) => {
         case 'POST':
             const token = JSON.parse(event.body).token;
             console.log("Token: " + token);
-            const decipher = crypto.createDecipher('aes192',key);
-            var decipheredToken = decipher.update(token, 'hex', 'utf8');
-            decipheredToken += decipher.final('utf8');
+            var decipheredToken = "";
+            var username = "";
+            try { 
+                const decipher = crypto.createDecipher('aes192',key);
+                decipheredToken = decipher.update(token, 'hex', 'utf8');
+                decipheredToken += decipher.final('utf8');
+                username = JSON.parse(decipheredToken).username; // Check for valid JSON
+            } catch(err) {
+                callback(null, {statusCode: '403', body: "Could not decipher token", headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}});
+            }
             console.log('DECIPHERED TOKEN:' + decipheredToken);
 
             var queryParams = {
@@ -42,7 +49,7 @@ exports.handler = (event, context, callback) => {
                     "#username": "username"
                 },
                 ExpressionAttributeValues: {
-                    ":user":JSON.parse(decipheredToken).username
+                    ":user":username
                 }
             };
 
@@ -54,8 +61,9 @@ exports.handler = (event, context, callback) => {
 
                 else {
                     console.log("QUERY RESULT:" + JSON.stringify(data.Items));
-                    if(data.Items.length == 0) {
-                        done({message:"Username or password incorrect."},data);
+                    if(data.Items.length === 0) {
+                        callback(null, {statusCode: '403', body: "Incorrect username", headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}});
+            
                     }
                     else {
                         done(null,{username:data.Items[0].username,email:data.Items[0].email,firstname:data.Items[0].firstname,lastname:data.Items[0].lastname,verified:data.Items[0].verified});

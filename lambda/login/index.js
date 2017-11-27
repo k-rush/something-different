@@ -16,7 +16,7 @@ exports.handler = (event, context, callback) => {
     const parsedBody = JSON.parse(event.body);
 
     const done = (err, res) => callback(null, {
-        statusCode: err ? '400' : '200',
+        statusCode: err ? (err.code ? err.code : '400') : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
             'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ exports.handler = (event, context, callback) => {
                 else {
                     console.log("QUERY RESULT:" + JSON.stringify(data.Items));
                     if(data.Items.length == 0) {
-                        done({message:"Username or password incorrect."},data);
+                        done({message:"Username or password incorrect.", code:"403"},data);
                     }
                     else {
                         const dbHashedPass = data.Items[0].password; // retrieve hashed pw from database
@@ -57,7 +57,7 @@ exports.handler = (event, context, callback) => {
                         const hash = crypto.createHash('sha256');
                         hash.update(parsedBody.password + data.Items[0].salt);
                         if(data.Items[0].password != hash.digest('hex')) {
-                            done({message:"Username or password incorrect."},data);
+                            done({message:"Username or password incorrect.", code:"403"},data);
                         }
                         else {
                             //Create new token.
