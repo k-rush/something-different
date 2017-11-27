@@ -1,6 +1,5 @@
 @charset "utf-8";
 #navbar {
-	border-bottom: 1px solid black;
 }
 
 #nav {
@@ -12,19 +11,12 @@
 	
 }
 #nav ul {
-	height:100%;
-	width:100%;
-	float:left; 
-	list-style:none;
 	display: inline;
-	padding:0 3% 0 0 ;
-	/* for visual troubleshooting  border:1px solid red */;
+	margin: 0 0 0 0;
 }
 
 /* You should make this auto-resizing if possible.  Shouldn't have to come mess with it every tiome you add a nav link. */
 #nav li {
-	height:100%;
-	width:15%;
 	float:left; 
 	list-style:none;
 	display: inline;
