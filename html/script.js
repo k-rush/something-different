@@ -2,7 +2,68 @@
 function onLoadHome() {
     validateAndRun(function(data) {
       $("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
+      var tokendata = {'token': readCookie('token')};
+      $.ajax( 
+        {
+          method: "POST",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/get-threads",
+          dataType: "json",
+          data: JSON.stringify(tokendata),
+          crossdomain: true,
+          async:true, 
+          success: function(data) {
+            //Success callback of API call
+            
+            console.log("SUCCESS " + JSON.stringify(data) + "\n");
+            data.sort(compareTimes);
+            data.forEach(function(element){
+              $("#threads").append("Subject:" + element.Subject + "<br>Body: " + element.Body +"<br>Posted by: " + element.PostedBy + "  Time: " + new Date(parseInt(element.Time)) + " <br>");
+            } );
+            
+          },
+          error: function(data) {
+            //Error callback of API call
+            console.log("ERROR " + JSON.stringify(data));
+            window.location.hash = "#login.html";
+
+          }
+
+        }
+      );
     });
+
+    /**/
+
+    $("#thread-submit").click(function() {
+      var formdata = {};
+
+      formdata.token = readCookie('token');
+
+      formdata.subject = $("#thread-subject-input").val();
+      formdata.body = $("#thread-body-input").val();
+
+      $.ajax( 
+        {
+          method: "POST",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/post-thread",
+          dataType: "json",
+          data: JSON.stringify(formdata),
+          crossdomain: true,
+          async:true, 
+          success: function(data) {
+            console.log("SUCCESS " + JSON.stringify(data) + "\n");
+            window.location.hash = "#home.html";
+            $(window).hashchange();
+          },
+          error: function(data) {
+            console.log("ERROR " + JSON.stringify(data));
+          }
+
+        }
+      );
+
+      
+  });
 };
 
 function onLoadPeople() {
@@ -267,4 +328,12 @@ function validatePassword() {
     return false
   }
   else return true;
+}
+
+function compareTimes(a,b) {
+  if (a.Time > b.Time)
+    return -1;
+  if (a.Time < b.Time)
+    return 1;
+  return 0;
 }
