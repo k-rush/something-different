@@ -8,7 +8,9 @@ const doc = require('dynamodb-doc');
 const dynamo = new doc.DynamoDB();
 
 //CHANGE THESE
-const table = 'SD-user';
+const userTable = 'SD-user';
+const reply = 'SD-reply';
+const threadTable = 'SD-thread';
 const senderEmail = 'kdr213@gmail.com';
 const API = "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/";
 const key = 'hANtBs3yjrwkgK9g'; //TODO CHANGE THIS IN PRODUCTION SO IT CAN'T BE SCRUBBED FROM GITHUB
@@ -18,12 +20,6 @@ const key = 'hANtBs3yjrwkgK9g'; //TODO CHANGE THIS IN PRODUCTION SO IT CAN'T BE 
  */
 exports.handler = (event, context, callback) => {
 
-    var parsedBody;
-    try { 
-        parsedBody = JSON.parse(event.body);
-    } catch (err) { done({message:"Could not process event body"},null); }
-    console.log('Received event:', JSON.stringify(event, null, 2));
-    console.log('username',parsedBody.username);
     
     const done = (err, res) => callback(null, {
         statusCode: err ? (err.code ? err.code : '400') : '200',
@@ -33,12 +29,35 @@ exports.handler = (event, context, callback) => {
             'Access-Control-Allow-Origin': '*',
         },
     });
+
+    var parsedBody;
+    try { 
+        parsedBody = JSON.parse(event.body);
+    } catch (err) { done({message:"Could not process event body"},null); }
+    console.log('Received event:', JSON.stringify(event, null, 2));
+    console.log('username',parsedBody.username);
+    
     
     switch (event.httpMethod) {
         case 'POST':
             //Query DB to see if username exists...
-            if(!validateToken(paresdBody.token)) done({code:'403', message:'Could not validate token.'});
-            
+            var parsedToken;
+            if(!(parsedToken = validateToken(parsedBody.token))) {
+                console.log(JSON.stringify(parsedToken));
+                done({code:'403', message:'Could not validate token.'});
+            }
+            else if(!validateFields(parsedBody)) done({message:"Invalid fields, please validate client-side before sending me shit data, scrub."});
+            else {
+                var params = {
+                    TableName : threadTable,
+                    Item : {"Subject": parsedBody.subject, "PostedBy":parsedToken.username, "Body":parsedBody.body, "Time":new Date().getTime()}
+                };
+
+                dynamo.putItem(params, function(err, data) {
+                    done(null,data);
+                });
+                            
+            }
             
             break;
         default:
@@ -60,7 +79,7 @@ function validateToken(token) {
     console.log('DECIPHERED TOKEN:' + decipheredToken);
 
     var queryParams = {
-        TableName : table,
+        TableName : userTable,
         KeyConditionExpression: "#username = :user",
         ExpressionAttributeNames:{
             "#username": "username"
@@ -86,4 +105,13 @@ function validateToken(token) {
             }
         }
     });
-};
+}
+
+function validateFields(data) {
+    return (isString(data.username) && isString(data.message)&& isString(data.subject));                         
+}
+
+/** Tests typeof data is string */
+function isString(data) {
+    return (typeof data === 'string');
+}
