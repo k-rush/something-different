@@ -17,7 +17,7 @@ function onLoadHome() {
             console.log("SUCCESS " + JSON.stringify(data) + "\n");
             data.sort(compareTimes);
             data.forEach(function(element){
-              $("#threads").append("Subject:" + element.Subject + "<br>Body: " + element.Body +"<br>Posted by: " + element.PostedBy + "  Time: " + new Date(parseInt(element.Time)) + " <br>");
+              $("#threads").append("Subject:" + element.Subject + "<br>Body: " + element.Body +"<br>Posted by: " + element.PostedBy + "  Time: " + new Date(parseInt(element.Time)) + " <br><br>");
             } );
             
           },
