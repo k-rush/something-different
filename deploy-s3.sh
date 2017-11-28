@@ -1,1 +1,1 @@
-aws s3 cp ./ s3://somethingdifferentaa.org --recursive
+aws s3 cp ./html/ s3://somethingdifferentaa.org --recursive

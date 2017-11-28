@@ -22,7 +22,7 @@ function onLoadHome() {
                     <div class='row-fluid subject-div'>` + element.Subject + "</div>" +
                     `<div class='row-fluid body-div'>` + element.Body + "</div>" +
                     `<div class='row-fluid posteby-div'>Posted by: ` + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + `</div>
-                </div>`);
+                </div><br>`);
             } );
             
           },
