@@ -40,9 +40,7 @@ exports.handler = (event, context, callback) => {
     switch (event.httpMethod) {
         case 'POST':
             //Query DB to see if username exists...
-            var parsedToken;
-            if(!validateFields(parsedBody)) done({message:"Invalid fields, please validate client-side before sending me shit data, scrub."});
-            
+
             validateToken(parsedBody.token, function(data) {
                 if(!data) done({code:'403', message:'Could not validate token.'});
 
@@ -50,13 +48,24 @@ exports.handler = (event, context, callback) => {
 
                 console.log("\nPARSED BODY:" + parsedBody.subject + " " + data.username + " " + parsedBody.body + " " + timeString);
                 
-                var params = {
-                    TableName : threadTable,
-                    Item : {"Subject": parsedBody.subject, "PostedBy":data.username, "Body":parsedBody.body, "Time":timeString}
-                };
 
-                dynamo.putItem(params, function(err, data) {
-                    done(err,data);
+                var scanParams = {
+                    TableName: threadTable,
+                    ProjectionExpression: "PostedBy, Subject, Body, #t",
+                    ExpressionAttributeNames: {
+                        "#t": "Time",
+                    }
+                };
+                dynamo.scan(scanParams, function(err,data) {
+                    if(err) {
+                        console.log(err);
+                        done(err,data);
+                    }
+
+                    else {
+                        done(null,data.Items);
+                    }
+            
                 });
                             
             });
@@ -107,14 +116,4 @@ function validateToken(token, callback) {
             }
         }
     });
-}
-
-function validateFields(data) {
-    console.log("VALIDATE FIELDS DATA:" + JSON.stringify(data));
-    return (isString(data.token) && isString(data.body)&& isString(data.subject));                         
-}
-
-/** Tests typeof data is string */
-function isString(data) {
-    return (typeof data === 'string');
 }

@@ -3,7 +3,7 @@
 #remove zip
 echo "REMOVING PERVIOUS DEPLOYMENT PACKAGES"
 
-rm login.zip register-user.zip verify-email.zip get-users.zip post-thread.zip
+rm login.zip register-user.zip verify-email.zip get-users.zip post-thread.zip get-threads.zip
 
 #make new zip
 echo "ZIPPING DEPLOYMENT PACKAGES"
@@ -32,6 +32,10 @@ pushd /home/kyle/Documents/code/something-different/lambda/post-thread
 zip -r ../post-thread.zip *
 popd
 
+pushd /home/kyle/Documents/code/something-different/lambda/get-threads
+zip -r ../get-threads.zip *
+popd
+
 #delpoy
 echo "DEPLOYING PACKAGES TO AWS LAMBDA"
 aws lambda update-function-code --function-name SD-login --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/login.zip
@@ -40,3 +44,4 @@ aws lambda update-function-code --function-name SD-verify-email --zip-file fileb
 aws lambda update-function-code --function-name SD-validate-token --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/validate-token.zip
 aws lambda update-function-code --function-name SD-get-users --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/get-users.zip
 aws lambda update-function-code --function-name SD-post-thread --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/post-thread.zip
+aws lambda update-function-code --function-name SD-get-threads --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/get-threads.zip
