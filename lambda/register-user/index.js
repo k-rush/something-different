@@ -84,7 +84,6 @@ exports.handler = (event, context, callback) => {
                             
                             dynamo.putItem(params, function(err, data) {
                                 if(!err) sendVerificationEmail([parsedBody.email], "Email Verification for Something Different's home group website", url);
-                                
                             });
                             done(null,data);
                             //NOTE: Email needs to be verified!

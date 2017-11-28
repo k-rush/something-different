@@ -138,6 +138,18 @@
 	text-align: center;
 }
 
+.thread-div {
+  border:1px solid black;
+  max-width:400px;
+}
+
+.subject-div {
+  border-bottom:1px solid black;
+}
+.body-div {
+  border-bottom:1px solid black;
+}
+
 
 /********************** EVENTS ******************************/
 

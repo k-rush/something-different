@@ -1,7 +1,7 @@
 
 function onLoadHome() {
     validateAndRun(function(data) {
-      $("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
+      //$("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
       var tokendata = {'token': readCookie('token')};
       $.ajax( 
         {
@@ -17,7 +17,12 @@ function onLoadHome() {
             console.log("SUCCESS " + JSON.stringify(data) + "\n");
             data.sort(compareTimes);
             data.forEach(function(element){
-              $("#threads").append("Subject:" + element.Subject + "<br>Body: " + element.Body +"<br>Posted by: " + element.PostedBy + "  Time: " + new Date(parseInt(element.Time)) + " <br><br>");
+              $("#threads").append(
+                `<div class='row-fluid thread-div'> 
+                    <div class='row-fluid subject-div'>` + element.Subject + "</div>" +
+                    `<div class='row-fluid body-div'>` + element.Body + "</div>" +
+                    `<div class='row-fluid posteby-div'>Posted by: ` + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + `</div>
+                </div>`);
             } );
             
           },
