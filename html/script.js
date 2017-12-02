@@ -1,4 +1,37 @@
+//Window hashchange function
+$(function() {
+    $(window).hashchange(function() {
 
+      var url = window.location.hash.replace('#', '');
+      if(url == "") {
+        url = "home.html";
+      }
+      
+      $("#content-container").empty();
+      
+      $('<div class="item">').appendTo("#content-container").load(url, function() {
+        $("#content-container").ready(function() {
+          if(url == "home.html") onLoadHome();
+          else if (url == "events.html") onLoadEvents();
+          else if (url == "login.html") onLoadLogin();
+          else if (url == "register.html") onLoadRegister();
+          else if (url == "people.html") onLoadPeople();
+        });
+
+      });
+
+    
+      /** boldify nav links */
+      $(".update-content").each(function(index) {
+        if(this.hash.replace("#","") == url) $(this).css("font-weight","bold");
+        else $(this).css("font-weight","normal");
+      });
+
+    });
+
+    $(window).hashchange();
+
+});
 function onLoadHome() {
     validateAndRun(function(data) {
       //$("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
@@ -177,56 +210,56 @@ function onLoadRegister() {
 
   //Bind event handler to make AJAX call to invoke API Gateway for login lambda function
   $("#register-form-submit").click(function() {
-      if(validatePassword()) {
-        var formdata = {};
+    var formdata = {};
 
-        formdata.username = $("#register-username-input").val();
-        formdata.password = $("#register-password-input").val();
-        formdata.email = $("#register-email-input").val();
-        formdata.firstname = $("#register-first-name-input").val();
-        formdata.lastname = $("#register-last-name-input").val();
-
-        $.ajax( 
-          {
-            method: "POST",
-            url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/register-user",
-            dataType: "json",
-            data: JSON.stringify(formdata),
-            crossdomain:true,
-            async:true, 
-            success: function(data) {
-              console.log("SUCCESS" + JSON.stringify(data));
-              $.ajax( 
-                {
-                  method: "POST",
-                  url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/login",
-                  dataType: "json",
-                  data: JSON.stringify(formdata),
-                  crossdomain: true,
-                  async:true, 
-                  success: function(data) {
-                    $("#debug-div").append("Login Succeeded. TOKEN: " + data.token + "<br>");
-                    createCookie('token',data.token,1);
-                    createCookie('username',formdata['username'],1);
-                    console.log("SUCCESS " + JSON.stringify(data) + "\n");
-                    window.location.hash = "#home.html";
-                  },
-                  error: function(data) {
-                    console.log("ERROR " + JSON.stringify(data));
-                  }
-
+    formdata.username = $("#register-username-input").val();
+    formdata.password = $("#register-password-input").val();
+    formdata.email = $("#register-email-input").val();
+    formdata.firstname = $("#register-first-name-input").val();
+    formdata.lastname = $("#register-last-name-input").val();
+    if(validateFields(formdata)) {
+      
+      $.ajax( 
+        {
+          method: "POST",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/register-user",
+          dataType: "json",
+          data: JSON.stringify(formdata),
+          crossdomain:true,
+          async:true, 
+          success: function(data) {
+            console.log("SUCCESS" + JSON.stringify(data));
+            $.ajax( 
+              {
+                method: "POST",
+                url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/login",
+                dataType: "json",
+                data: JSON.stringify(formdata),
+                crossdomain: true,
+                async:true, 
+                success: function(data) {
+                  $("#debug-div").append("Login Succeeded. TOKEN: " + data.token + "<br>");
+                  createCookie('token',data.token,1);
+                  createCookie('username',formdata['username'],1);
+                  console.log("SUCCESS " + JSON.stringify(data) + "\n");
+                  window.location.hash = "#home.html";
+                },
+                error: function(data) {
+                  console.log("ERROR " + JSON.stringify(data));
                 }
-              );
 
-            },
-            error: function(data) {
-              console.log("ERROR" + JSON.stringify(data));
-            }
+              }
+            );
 
+          },
+          error: function(data) {
+            console.log("ERROR" + JSON.stringify(data));
           }
-        );
 
-      }
+        }
+      );
+
+    }
   });
 };
 
@@ -263,40 +296,7 @@ function onLoadEvents() {
 };
 
 
-$(function() {
-    $(window).hashchange(function() {
-
-      var url = window.location.hash.replace('#', '');
-      if(url == "") {
-        url = "home.html";
-      }
-      
-      $("#content-container").empty();
-
-      $('<div class="item">').appendTo("#content-container").load(url, function() {
-        $("#content-container").ready(function() {
-          if(url == "home.html") onLoadHome();
-          else if (url == "events.html") onLoadEvents();
-          else if (url == "login.html") onLoadLogin();
-          else if (url == "register.html") onLoadRegister();
-          else if (url == "people.html") onLoadPeople();
-        });
-
-      });
-
-    
-      /** boldify nav links */
-      $(".update-content").each(function(index) {
-        if(this.hash.replace("#","") == url) $(this).css("font-weight","bold");
-        else $(this).css("font-weight","normal");
-      });
-
-    });
-
-    $(window).hashchange();
-
-});
-
+//Save a cookie
 function createCookie(name,value,days) {
     var expires = "";
     if (days) {
@@ -307,6 +307,7 @@ function createCookie(name,value,days) {
     document.cookie = name + "=" + value + expires + "; path=/";
 }
 
+//Retreive cookie.
 function readCookie(name) {
     var nameEQ = name + "=";
     var ca = document.cookie.split(';');
@@ -318,23 +319,74 @@ function readCookie(name) {
     return null;
 }
 
-function validatePassword() {
-  //debugger;
-  password = $("#register-password-input").val();
+//Validates the password for registering.
+function validatePassword(password) {
   confirm = $("#register-confirm-password-input").val();
 
-  
   if(password !== confirm) {
-    alert("Passwords do not match!");
+    $("#reg-error").html("Passwords do not match");
     return false;
   }
   else if(password.length < 6) {
-    alert("Password must be at least 6 characters long.");
+    $("#reg-error").html("Password must be at least 6 characters long");
     return false
   }
   else return true;
 }
 
+
+/** Validates email address */
+function validateEmail(email) {  
+    if(!(isString(email) && /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email))) {
+      $("#reg-error").html("Invalid email address.");
+      return false;
+    }  
+    else return true;
+} 
+
+/** Validates email address */
+function validateUsername(username) {  
+    if(!isString(username)) {
+      $("#reg-error").html("Invalid username. Pls enter a string (how did you not?)");
+      return false;
+    }  
+    else return true;
+} 
+
+/** Validates First Name */
+function validateFirstName(firstname) {  
+    if(!isString(firstname) && firstname.length > 0) {
+      $("#reg-error").html("Invalid first name.");
+      return false;
+    }  
+    else return true;
+} 
+
+/** Validates Last Initial */
+function validateLastName(lastname) {  
+    if(!isString(lastname) && lastname.length > 0) {
+      $("#reg-error").html("Invalid last name.");
+      return false;
+    }
+    else if(lastname.length > 1) {
+      $("#reg-error").html("Please enter only your last initial, to preserve anonymity.");
+      return false;
+    }
+    else return true;
+} 
+
+/** Validates all of the user registration fields */
+function validateFields(data) {
+    return (validateUsername(data.username) && validateFirstName(data.firstname) && validateLastName(data.lastname) && validateEmail(data.email) && validatePassword(data.password));                         
+}
+
+/** Tests typeof data is string */
+function isString(data) {
+    return (typeof data === 'string');
+}
+
+
+//Used for sorting function for threads.  Compares two time values (newest first)
 function compareTimes(a,b) {
   if (a.Time > b.Time)
     return -1;

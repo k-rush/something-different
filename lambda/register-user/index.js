@@ -141,17 +141,17 @@ function sendVerificationEmail(to, subject, data) {
 
 /** Validates all of the user registration fields */
 function validateFields(data) {
-    return (isString(data.username) && isString(data.firstname) && isString(data.lastname) && validateEmail(data.email) && validatePassword(data.password));                         
+    if(!isString(data.username)) && isString(data.firstname) && isString(data.lastname) && validateEmail(data.email) && validatePassword(data.password));                         
 }
 
 /** Validates email address */
 function validateEmail(email) {  
-    return (isString(email) && /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email))  
+    return (isString(email) && /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email));  
 } 
 
 /** Validates password */
 function validatePassword(password) {
-    return (isString(password) && password.length > 6)
+    return (isString(password) && password.length > 6);
 }
 
 /** Tests typeof data is string */
