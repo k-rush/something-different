@@ -52,7 +52,7 @@ function onLoadHome() {
       $.ajax( 
         {
           method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/get-threads",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-threads",
           dataType: "json",
           data: JSON.stringify(tokendata),
           crossdomain: true,
@@ -96,7 +96,7 @@ function onLoadHome() {
       $.ajax( 
         {
           method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/post-thread",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/post-thread",
           dataType: "json",
           data: JSON.stringify(formdata),
           crossdomain: true,
@@ -123,7 +123,7 @@ function onLoadPeople() {
     $.ajax( 
         {
           method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/get-users",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-users",
           dataType: "json",
           data: JSON.stringify(tokendata),
           crossdomain: true,
@@ -159,7 +159,7 @@ function validateAndRun(callback) {
   $.ajax( 
       {
         method: "POST",
-        url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/validate-token",
+        url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/validate-token",
         dataType: "json",
         data: JSON.stringify(tokendata),
         crossdomain: true,
@@ -196,7 +196,7 @@ function onLoadLogin() {
       $.ajax( 
         {
           method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/login",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/login",
           dataType: "json",
           data: JSON.stringify(formdata),
           crossdomain: true,
@@ -235,7 +235,7 @@ function onLoadRegister() {
       $.ajax( 
         {
           method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/register-user",
+          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/register-user",
           dataType: "json",
           data: JSON.stringify(formdata),
           crossdomain:true,
@@ -245,7 +245,7 @@ function onLoadRegister() {
             $.ajax( 
               {
                 method: "POST",
-                url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/login",
+                url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/login",
                 dataType: "json",
                 data: JSON.stringify(formdata),
                 crossdomain: true,

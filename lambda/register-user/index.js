@@ -1,5 +1,7 @@
 'use strict';
 var crypto = require('crypto');
+var async = require('async');
+var waterfall = require('async-waterfall');
 var AWS = require('aws-sdk');
 AWS.config.update({region: 'us-west-2'});
 
@@ -12,11 +14,8 @@ const dynamo = new doc.DynamoDB();
  */
 exports.handler = (event, context, callback) => {
 
-    const parsedBody = JSON.parse(event.body);
-
     console.log('Received event:', JSON.stringify(event, null, 2));
     console.log('username',JSON.parse(event.body).username);
-
     
     
     const done = (err, res) => callback(null, {
@@ -28,67 +27,28 @@ exports.handler = (event, context, callback) => {
         },
     });
 
-    //Load beta or prod config
-    var configuration = {};
-    configuration = getConfiguration(event, done);
     
     switch (event.httpMethod) {
         case 'POST':
-            //Query DB to see if username exists...
 
-            //Parameters used to query dynamo table for the username
-            var queryParams = {
-                TableName : configuration['user-table'],
-                KeyConditionExpression: "#username = :user",
-                ExpressionAttributeNames:{
-                    "#username": "username"
-                },
-                ExpressionAttributeValues: {
-                    ":user":parsedBody.username
-                }
-            };
+            //Waterfall..
+            // Set configuration
+            // Validate other fields
+            // Check if username exists in DB
+            // Salt & hash password
+            // Put new user in DB
+            // generate verification email
+            // send verification email
 
-            console.log("QUERY PARAMS:" + JSON.stringify(queryParams));
-            dynamo.query(queryParams, function(err,data) {
-                if(err) {
-                    console.log(err);
-                    done(err,data);
-                }
-
-                else {
-                    console.log("\n\nQUERY RESULT:" + JSON.stringify(data.Items) + "\n\n + data.Items > 0 =" + (data.Items.length > 0));
-                    if(data.Items.length > 0) {
-                        done({message:"Username already exists."},data);
-                    }
-                    else {
-                        if(!validateFields(parsedBody)) done({message:"Invalid fields, please validate client-side before sending me shit data, scrub."},data);
-                        else {
-                            //Salt and hash PW.
-                            const hash = crypto.createHash('sha256');
-                            const salt = crypto.randomBytes(16).toString('hex');
-                            hash.update(parsedBody.password + salt);
-                            const hashedPass = hash.digest('hex');
-
-                            console.log("USERNAME: " + parsedBody.username + "HASHED PASSWORD:" + hashedPass + " SALT: " + salt);
-                            
-                            //Params used to put new user into database
-                            var params = {
-                                TableName : configuration['user-table'],
-                                Item : {"username":parsedBody.username, "password":hashedPass, "salt":salt, "email":parsedBody.email, "firstname":parsedBody.firstname, "lastname":parsedBody.lastname, "verified":false}
-                            };
-                            
-                            var url = generateVerificationURL(parsedBody.username, configuration);
-                            
-                            dynamo.putItem(params, function(err, data) {
-                                if(!err) sendVerificationEmail(configuration['sender-email'], [parsedBody.email], "Email Verification for Something Different's home group website", url);
-                            });
-                            done(null,data);
-                            //NOTE: Email needs to be verified!
-                        }
-                        
-                    }
-                }
-            });
+            waterfall([
+                async.apply(setConfiguration, event),
+                validateFields,
+                queryUserDB,
+                saltAndHashPW,
+                putNewUser,
+                generateVerificationURL,
+                sendVerificationEmail
+                ], done);
 
             
             break;
@@ -96,150 +56,34 @@ exports.handler = (event, context, callback) => {
             done(new Error(`Unsupported method "${event.httpMethod}"`));
     }
 
-    //Sets configuration based on dev stage
-    function getConfiguration(event, done) {
-
-        var configuration = {};
-        console.log(event.resource.substring(1,5));
-        if(event.resource.substring(1,5) == 'beta') {
-            configuration['stage'] = 'beta';
-            configuration['user-table'] = 'SD-user-beta';
-            configuration['reply-table'] = 'SD-reply-beta';
-            configuration['thread-table'] = 'SD-thread-beta';
-
-
-            var keyQueryParams = {
-                    TableName : 'SD-beta-key'
-            };
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['key'] = data.Items[0].Key;
-                    }
-            });
-
-            keyQueryParams = {
-                    TableName : 'SD-beta-sender-email'
-            };
-
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['sender-email'] = data.Items[0].email;
-                    }
-            });
-        } else if(event.resource.substring(1,5) == 'prod') {
-            configuration['stage'] = 'prod';
-            configuration['user-table'] = 'SD-user';
-
-            var keyQueryParams = {
-                    TableName : 'SD-beta-key',
-            };
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'403'},data);
-                    }
-                    else {
-                        configuration['key'] = data.Items[0].Key;
-                    }
-            });
-            keyQueryParams = {
-                    TableName : 'SD-sender-email',
-            };
-
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'403'},data);
-                    }
-                    else {
-                        configuration['sender-email'] = data.Items[0].email;
-                    }
-            });
-
-        } else done({message:"Invalid resource path", code:'403'});
-
-        return configuration;
-    };
-
-
-
-    function validateToken(token, key, callback) {
-        var decipheredToken = "";
-        var username = "";
-        try { 
-            const decipher = crypto.createDecipher('aes192',key);
-            decipheredToken = decipher.update(token, 'hex', 'utf8');
-            decipheredToken += decipher.final('utf8');
-            username = JSON.parse(decipheredToken).username; // Check for valid JSON
-        } catch(err) {
-            callback(null);
-        }
-        console.log('DECIPHERED TOKEN:' + decipheredToken);
-
-        var queryParams = {
-            TableName : configuration['user-table'],
-            KeyConditionExpression: "#username = :user",
-            ExpressionAttributeNames:{
-                "#username": "username"
-            },
-            ExpressionAttributeValues: {
-                ":user":username
-            }
-        };
-
-        dynamo.query(queryParams, function(err,data) {
-            if(err) {
-                console.log(err);
-                callback(null);
-            }
-
-            else {
-                console.log("QUERY RESULT:" + JSON.stringify(data.Items));
-                if(data.Items.length === 0) {
-                    callback(null);
-                }
-                else {
-                    callback({username:data.Items[0].username,email:data.Items[0].email,firstname:data.Items[0].firstname,lastname:data.Items[0].lastname,verified:data.Items[0].verified});
-                }
-            }
-        });
-    }
 };
 
 /** Generates a verificaiton URL to be sent in a verification email.
  *  form: http://<API ENDPOINT>?token=<VERIFICAITON TOKEN>
  */
-function generateVerificationURL(username, configuration) {
+function generateVerificationURL(event, configuration, callback) {
     var exptime = new Date(new Date().setFullYear(new Date().getFullYear() + 1)); //Set expiration time to current year + 1
     var cipher = crypto.createCipher('aes192',configuration['key']); 
 
-    var token = cipher.update(JSON.stringify({"username":username,"expiration":exptime}), 'utf8', 'hex');
+    var token = cipher.update(JSON.stringify({"username":event.body.username,"expiration":exptime}), 'utf8', 'hex');
     token += cipher.final('hex');
-
-    return configuration['API'] + "verify-email?token=" + token;
+    var emailBody = configuration['API'] + "verify-email?token=" + token;
+    callback(null, event, configuration, emailBody);
 }
 
-function sendVerificationEmail(from, to, subject, data) {
+function sendVerificationEmail(event, configuration, emailBody, callback) {
     var SES = new AWS.SES({apiVersion: '2010-12-01'});
     
     SES.sendEmail( { 
-       Source: from,
-       Destination: { ToAddresses: to },
+       Source: configuration['sender-email'],
+       Destination: { ToAddresses: event.body.email },
        Message: {
            Subject: {
-              Data: subject
+              Data: configuration['email-subject']
            },
            Body: {
                Text: {
-                   Data: data,
+                   Data: emailBody,
                }
             }
        }
@@ -248,13 +92,18 @@ function sendVerificationEmail(from, to, subject, data) {
             if(!err) {
                 console.log('Email sent:');
                 console.log(data);
+                callback(null);
             }
+            else callback({message:'Error while sending verification email.'});
      });
 } 
 
 /** Validates all of the user registration fields */
-function validateFields(data) {
-    return (isString(data.username) && isString(data.firstname) && isString(data.lastname) && validateEmail(data.email) && validatePassword(data.password));                         
+function validateFields(event, configuration, callback) {
+    var body = JSON.parse(event.body);
+    if(isString(body.username) && isString(body.firstname) && isString(body.lastname) && validateEmail(body.email) && validatePassword(body.password))
+        callback(null, event, configuration);
+    else callback({message: 'Invalid registration inputs', code:'400'});                         
 }
 
 /** Validates email address */
@@ -270,4 +119,137 @@ function validatePassword(password) {
 /** Tests typeof data is string */
 function isString(data) {
     return (typeof data === 'string');
+}
+
+
+//Sets configuration based on dev stage
+function setConfiguration(event, callback) {
+
+    var configuration = {};
+    
+    if(event.resource.substring(1,5) == 'beta') {
+        configuration['stage'] = 'beta';
+        configuration['user-table'] = 'SD-user-beta';
+        configuration['reply-table'] = 'SD-reply-beta';
+        configuration['thread-table'] = 'SD-thread-beta';
+        configuration['email-subject'] = 'Verify your email address for Something Different';
+
+
+        var keyQueryParams = {
+                TableName : 'SD-beta-key'
+        };
+        dynamo.scan(keyQueryParams, function(err,data) {
+                if(err || data.Items.length === 0) {
+                    console.log(err);
+                    callback({message:'Internal server error', code:'500'},data);
+                }
+                else {
+                    configuration['key'] = data.Items[0].Key;
+                    var emailQueryParams = {
+                        TableName : 'SD-beta-sender-email',
+                    };
+
+                    dynamo.scan(emailQueryParams, function(err,data) {
+                            if(err || data.Items.length === 0) {
+                                console.log(err);
+                                callback({message:'Internal server error', code:'403'},data);
+                            }
+                            else {
+                                configuration['sender-email'] = data.Items[0].email;
+                                callback(null, event, configuration)
+                            }
+                    });
+                }
+        });
+
+        
+    } else if(event.resource.substring(1,5) == 'prod') {
+        configuration['stage'] = 'prod';
+        configuration['user-table'] = 'SD-user';
+
+        var keyQueryParams = {
+                TableName : 'SD-beta-key',
+        };
+        dynamo.scan(keyQueryParams, function(err,data) {
+                if(err || data.Items.length === 0) {
+                    console.log(err);
+                    callback({message:'Internal server error', code:'403'},data);
+                }
+                else {
+                    configuration['key'] = data.Items[0].Key;
+                    var emailQueryParams = {
+                        TableName : 'SD-sender-email',
+                    };
+
+                    dynamo.scan(emailQueryParams, function(err,data) {
+                            if(err || data.Items.length === 0) {
+                                console.log(err);
+                                callback({message:'Internal server error', code:'403'},data);
+                            }
+                            else {
+                                configuration['sender-email'] = data.Items[0].email;
+                                callback(null, event, configuration);
+                            }
+                    });
+                }
+        });
+
+    } else callback({message:"Invalid resource path", code:'403'});
+
+}
+
+function queryUserDB(event, configuration, callback) {
+
+    var queryParams = {
+        TableName : configuration['user-table'],
+        KeyConditionExpression: "#username = :user",
+        ExpressionAttributeNames:{
+            "#username": "username"
+        },
+        ExpressionAttributeValues: {
+            ":user":JSON.parse(event.body).username
+        }
+    };
+
+    dynamo.query(queryParams, function(err,data) {
+        if(err) {
+            console.log(err);
+            callback(err,data);
+        }
+
+        else {
+            console.log("QUERY RESULT:" + JSON.stringify(data.Items));
+            if(data.Items.length === 0) {
+                callback(null, event, configuration);
+
+            }
+            else {
+                callback({message: 'Username already exists'});
+            }
+        }
+    });
+}
+
+//Salt and hash PW.
+function saltAndHashPW(event, configuration, callback) {
+    var body = JSON.parse(event.body);
+    const hash = crypto.createHash('sha256');
+    const salt = crypto.randomBytes(16).toString('hex');
+    hash.update(body.password + salt);
+    const hashedPass = hash.digest('hex');
+
+    console.log("USERNAME: " + body.username + "HASHED PASSWORD:" + hashedPass + " SALT: " + salt);
+    callback(event, configuration, hashedPass, salt);                      
+}
+
+function putNewUser(event, configuration, hashedPass, salt, callback) {
+    //Params used to put new user into database
+    var params = {
+        TableName : configuration['user-table'],
+        Item : {"username":event.body.username, "password":hashedPass, "salt":salt, "email":event.body.email, "firstname":event.body.firstname, "lastname":event.body.lastname, "verified":false}
+    };
+    dynamo.putItem(params, function(err, data) {
+        if(!err) callback(null, event, configuration);
+        else callback({message:"Error putting user into database."});
+    });
 }

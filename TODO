@@ -6,3 +6,5 @@ Create GET messages resource
 Front-end shit
 
 Error messages for invalid registration fields
+
+In register user: what if lambda function fails after creating user entry in database?  Should we delete the user entry? Is there a way to finalize after the function succeeds?
