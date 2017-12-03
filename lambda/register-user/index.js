@@ -62,10 +62,11 @@ exports.handler = (event, context, callback) => {
  *  form: http://<API ENDPOINT>?token=<VERIFICAITON TOKEN>
  */
 function generateVerificationURL(event, configuration, callback) {
+    var body = JSON.parse(event.body);
     var exptime = new Date(new Date().setFullYear(new Date().getFullYear() + 1)); //Set expiration time to current year + 1
     var cipher = crypto.createCipher('aes192',configuration['key']); 
 
-    var token = cipher.update(JSON.stringify({"username":event.body.username,"expiration":exptime}), 'utf8', 'hex');
+    var token = cipher.update(JSON.stringify({"username":body.username,"expiration":exptime}), 'utf8', 'hex');
     token += cipher.final('hex');
     var emailBody = configuration['API'] + "verify-email?token=" + token;
     callback(null, event, configuration, emailBody);
@@ -73,10 +74,10 @@ function generateVerificationURL(event, configuration, callback) {
 
 function sendVerificationEmail(event, configuration, emailBody, callback) {
     var SES = new AWS.SES({apiVersion: '2010-12-01'});
-    
+    var body = JSON.parse(event.body);
     SES.sendEmail( { 
        Source: configuration['sender-email'],
-       Destination: { ToAddresses: event.body.email },
+       Destination: { ToAddresses: [body.email] },
        Message: {
            Subject: {
               Data: configuration['email-subject']
@@ -92,9 +93,12 @@ function sendVerificationEmail(event, configuration, emailBody, callback) {
             if(!err) {
                 console.log('Email sent:');
                 console.log(data);
-                callback(null);
+                callback(null, body);
             }
-            else callback({message:'Error while sending verification email.'});
+            else {
+                console.log(err);
+                callback({code:500, message:'Error while sending verification email.'});
+            }
      });
 } 
 
@@ -239,17 +243,25 @@ function saltAndHashPW(event, configuration, callback) {
     const hashedPass = hash.digest('hex');
 
     console.log("USERNAME: " + body.username + "HASHED PASSWORD:" + hashedPass + " SALT: " + salt);
-    callback(event, configuration, hashedPass, salt);                      
+    callback(null, event, configuration, hashedPass, salt);                      
 }
 
 function putNewUser(event, configuration, hashedPass, salt, callback) {
     //Params used to put new user into database
+    var body = JSON.parse(event.body);
+    console.log("Putting user into DB");
     var params = {
         TableName : configuration['user-table'],
-        Item : {"username":event.body.username, "password":hashedPass, "salt":salt, "email":event.body.email, "firstname":event.body.firstname, "lastname":event.body.lastname, "verified":false}
+        Item : {"username":body.username, "password":hashedPass, "salt":salt, "email":body.email, "firstname":body.firstname, "lastname":body.lastname, "verified":false}
     };
     dynamo.putItem(params, function(err, data) {
-        if(!err) callback(null, event, configuration);
-        else callback({message:"Error putting user into database."});
+        if(!err) {
+            console.log("User put into DB\n" + data);
+            callback(null, event, configuration);
+        }
+        else {
+            console.log(err + "\n" + data);
+            callback({code:'500', message:"Error putting user into database."});
+        }
     });
 }
