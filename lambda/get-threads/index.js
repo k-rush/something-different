@@ -71,23 +71,24 @@ exports.handler = (event, context, callback) => {
     }
 
     //Sets configuration based on dev stage
-    var getConfiguration = function(event) {
+    function getConfiguration(event) {
 
         var configuration = {};
+        console.log(event.resource.substring(1,5));
         if(event.resource.substring(1,5) == 'beta') {
-            configuration['stage'] = "beta";
+            configuration['stage'] = 'beta';
             configuration['user-table'] = 'SD-user-beta';
             configuration['reply-table'] = 'SD-reply-beta';
             configuration['thread-table'] = 'SD-thread-beta';
 
 
             var keyQueryParams = {
-                    TableName : 'SD-beta-key',
+                    TableName : 'SD-beta-key'
             };
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive crypto key from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'500'},data);
                     }
                     else {
                         configuration['key'] = data.Items[0].Key;
@@ -95,13 +96,13 @@ exports.handler = (event, context, callback) => {
             });
 
             keyQueryParams = {
-                    TableName : 'SD-beta-sender-email',
+                    TableName : 'SD-beta-sender-email'
             };
 
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive sender email from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'500'},data);
                     }
                     else {
                         configuration['sender-email'] = data.Items[0].email;
@@ -114,10 +115,10 @@ exports.handler = (event, context, callback) => {
             var keyQueryParams = {
                     TableName : 'SD-beta-key',
             };
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive crypto key from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'403'},data);
                     }
                     else {
                         configuration['key'] = data.Items[0].Key;
@@ -127,10 +128,10 @@ exports.handler = (event, context, callback) => {
                     TableName : 'SD-sender-email',
             };
 
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive sender email from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'403'},data);
                     }
                     else {
                         configuration['sender-email'] = data.Items[0].email;
@@ -144,7 +145,7 @@ exports.handler = (event, context, callback) => {
 
 
 
-    var validateToken = function(token, key, callback) {
+    function validateToken(token, key, callback) {
         var decipheredToken = "";
         var username = "";
         try { 

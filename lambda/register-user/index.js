@@ -17,9 +17,7 @@ exports.handler = (event, context, callback) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
     console.log('username',JSON.parse(event.body).username);
 
-    //Load beta or prod config
-    var configuration = {};
-    configuration = getConfiguration(event);
+    
     
     const done = (err, res) => callback(null, {
         statusCode: err ? (err.code ? err.code : '400') : '200',
@@ -29,6 +27,10 @@ exports.handler = (event, context, callback) => {
             'Access-Control-Allow-Origin': '*',
         },
     });
+
+    //Load beta or prod config
+    var configuration = {};
+    configuration = getConfiguration(event, done);
     
     switch (event.httpMethod) {
         case 'POST':
@@ -75,10 +77,10 @@ exports.handler = (event, context, callback) => {
                                 Item : {"username":parsedBody.username, "password":hashedPass, "salt":salt, "email":parsedBody.email, "firstname":parsedBody.firstname, "lastname":parsedBody.lastname, "verified":false}
                             };
                             
-                            var url = generateVerificationURL(parsedBody.username);
+                            var url = generateVerificationURL(parsedBody.username, configuration);
                             
                             dynamo.putItem(params, function(err, data) {
-                                if(!err) sendVerificationEmail([parsedBody.email], "Email Verification for Something Different's home group website", url);
+                                if(!err) sendVerificationEmail(configuration['sender-email'], [parsedBody.email], "Email Verification for Something Different's home group website", url);
                             });
                             done(null,data);
                             //NOTE: Email needs to be verified!
@@ -95,23 +97,24 @@ exports.handler = (event, context, callback) => {
     }
 
     //Sets configuration based on dev stage
-    var getConfiguration = function(event) {
+    function getConfiguration(event, done) {
 
         var configuration = {};
+        console.log(event.resource.substring(1,5));
         if(event.resource.substring(1,5) == 'beta') {
-            configuration['stage'] = "beta";
+            configuration['stage'] = 'beta';
             configuration['user-table'] = 'SD-user-beta';
             configuration['reply-table'] = 'SD-reply-beta';
             configuration['thread-table'] = 'SD-thread-beta';
 
 
             var keyQueryParams = {
-                    TableName : 'SD-beta-key',
+                    TableName : 'SD-beta-key'
             };
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive crypto key from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'500'},data);
                     }
                     else {
                         configuration['key'] = data.Items[0].Key;
@@ -119,13 +122,13 @@ exports.handler = (event, context, callback) => {
             });
 
             keyQueryParams = {
-                    TableName : 'SD-beta-sender-email',
+                    TableName : 'SD-beta-sender-email'
             };
 
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive sender email from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'500'},data);
                     }
                     else {
                         configuration['sender-email'] = data.Items[0].email;
@@ -138,10 +141,10 @@ exports.handler = (event, context, callback) => {
             var keyQueryParams = {
                     TableName : 'SD-beta-key',
             };
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive crypto key from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'403'},data);
                     }
                     else {
                         configuration['key'] = data.Items[0].Key;
@@ -151,10 +154,10 @@ exports.handler = (event, context, callback) => {
                     TableName : 'SD-sender-email',
             };
 
-            dynamo.query(keyQueryParams, function(err,data) {
+            dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Could not retreive sender email from DB', code:'403'},data);
+                        done({message:'Internal server error', code:'403'},data);
                     }
                     else {
                         configuration['sender-email'] = data.Items[0].email;
@@ -168,11 +171,11 @@ exports.handler = (event, context, callback) => {
 
 
 
-    var validateToken = function(token, key, callback) {
+    function validateToken(token, key, callback) {
         var decipheredToken = "";
         var username = "";
         try { 
-            const decipher = crypto.createDecipher('aes192', key);
+            const decipher = crypto.createDecipher('aes192',key);
             decipheredToken = decipher.update(token, 'hex', 'utf8');
             decipheredToken += decipher.final('utf8');
             username = JSON.parse(decipheredToken).username; // Check for valid JSON
@@ -214,7 +217,7 @@ exports.handler = (event, context, callback) => {
 /** Generates a verificaiton URL to be sent in a verification email.
  *  form: http://<API ENDPOINT>?token=<VERIFICAITON TOKEN>
  */
-function generateVerificationURL(username, getConfiguration) {
+function generateVerificationURL(username, configuration) {
     var exptime = new Date(new Date().setFullYear(new Date().getFullYear() + 1)); //Set expiration time to current year + 1
     var cipher = crypto.createCipher('aes192',configuration['key']); 
 
@@ -224,11 +227,11 @@ function generateVerificationURL(username, getConfiguration) {
     return configuration['API'] + "verify-email?token=" + token;
 }
 
-function sendVerificationEmail(to, subject, data) {
+function sendVerificationEmail(from, to, subject, data) {
     var SES = new AWS.SES({apiVersion: '2010-12-01'});
     
     SES.sendEmail( { 
-       Source: configuration['sender-email'],
+       Source: from,
        Destination: { ToAddresses: to },
        Message: {
            Subject: {
@@ -251,7 +254,7 @@ function sendVerificationEmail(to, subject, data) {
 
 /** Validates all of the user registration fields */
 function validateFields(data) {
-    if(!isString(data.username)) && isString(data.firstname) && isString(data.lastname) && validateEmail(data.email) && validatePassword(data.password));                         
+    return (isString(data.username) && isString(data.firstname) && isString(data.lastname) && validateEmail(data.email) && validatePassword(data.password));                         
 }
 
 /** Validates email address */
