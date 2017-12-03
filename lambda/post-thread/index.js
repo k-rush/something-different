@@ -7,14 +7,6 @@ const doc = require('dynamodb-doc');
 
 const dynamo = new doc.DynamoDB();
 
-//CHANGE THESE
-const userTable = 'SD-user';
-const reply = 'SD-reply';
-const threadTable = 'SD-thread';
-const senderEmail = 'kdr213@gmail.com';
-const API = "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/";
-const key = 'hANtBs3yjrwkgK9g'; //TODO CHANGE THIS IN PRODUCTION SO IT CAN'T BE SCRUBBED FROM GITHUB
-
 /**
  * Registers new user.
  */
@@ -36,6 +28,9 @@ exports.handler = (event, context, callback) => {
     } catch (err) { done({message:"Could not process event body"},null); }
     console.log('Received event:', JSON.stringify(event, null, 2));
     
+    //Load beta or prod config
+    var configuration = {};
+    configuration = getConfiguration(event);
     
     switch (event.httpMethod) {
         case 'POST':
@@ -43,7 +38,7 @@ exports.handler = (event, context, callback) => {
             var parsedToken;
             if(!validateFields(parsedBody)) done({message:"Invalid fields, please validate client-side before sending me shit data, scrub."});
             
-            validateToken(parsedBody.token, function(data) {
+            validateToken(parsedBody.token, , configuration['key'], function(data) {
                 if(!data) done({code:'403', message:'Could not validate token.'});
 
                 var timeString = new Date().getTime().toString();
@@ -51,7 +46,7 @@ exports.handler = (event, context, callback) => {
                 console.log("\nPARSED BODY:" + parsedBody.subject + " " + data.username + " " + parsedBody.body + " " + timeString);
                 
                 var params = {
-                    TableName : threadTable,
+                    TableName : configuration['thread-table'],
                     Item : {"Subject": parsedBody.subject, "PostedBy":data.username, "Body":parsedBody.body, "Time":timeString}
                 };
 
@@ -65,49 +60,125 @@ exports.handler = (event, context, callback) => {
         default:
             done(new Error(`Unsupported method "${event.httpMethod}"`));
     }
-};
 
-function validateToken(token, callback) {
-    var decipheredToken = "";
-    var username = "";
-    try { 
-        const decipher = crypto.createDecipher('aes192',key);
-        decipheredToken = decipher.update(token, 'hex', 'utf8');
-        decipheredToken += decipher.final('utf8');
-        username = JSON.parse(decipheredToken).username; // Check for valid JSON
-    } catch(err) {
-        callback(null);
-    }
-    console.log('DECIPHERED TOKEN:' + decipheredToken);
+    //Sets configuration based on dev stage
+    var getConfiguration = function(event) {
 
-    var queryParams = {
-        TableName : userTable,
-        KeyConditionExpression: "#username = :user",
-        ExpressionAttributeNames:{
-            "#username": "username"
-        },
-        ExpressionAttributeValues: {
-            ":user":username
-        }
+        var configuration = {};
+        if(event.resource.substring(1,5) == 'beta') {
+            configuration['stage'] = "beta";
+            configuration['user-table'] = 'SD-user-beta';
+            configuration['reply-table'] = 'SD-reply-beta';
+            configuration['thread-table'] = 'SD-thread-beta';
+
+
+            var keyQueryParams = {
+                    TableName : 'SD-beta-key',
+            };
+            dynamo.query(keyQueryParams, function(err,data) {
+                    if(err || data.Items.length === 0) {
+                        console.log(err);
+                        done({message:'Could not retreive crypto key from DB', code:'403'},data);
+                    }
+                    else {
+                        configuration['key'] = data.Items[0].Key;
+                    }
+            });
+
+            keyQueryParams = {
+                    TableName : 'SD-beta-sender-email',
+            };
+
+            dynamo.query(keyQueryParams, function(err,data) {
+                    if(err || data.Items.length === 0) {
+                        console.log(err);
+                        done({message:'Could not retreive sender email from DB', code:'403'},data);
+                    }
+                    else {
+                        configuration['sender-email'] = data.Items[0].email;
+                    }
+            });
+        } else if(event.resource.substring(1,5) == 'prod') {
+            configuration['stage'] = 'prod';
+            configuration['user-table'] = 'SD-user';
+
+            var keyQueryParams = {
+                    TableName : 'SD-beta-key',
+            };
+            dynamo.query(keyQueryParams, function(err,data) {
+                    if(err || data.Items.length === 0) {
+                        console.log(err);
+                        done({message:'Could not retreive crypto key from DB', code:'403'},data);
+                    }
+                    else {
+                        configuration['key'] = data.Items[0].Key;
+                    }
+            });
+            keyQueryParams = {
+                    TableName : 'SD-sender-email',
+            };
+
+            dynamo.query(keyQueryParams, function(err,data) {
+                    if(err || data.Items.length === 0) {
+                        console.log(err);
+                        done({message:'Could not retreive sender email from DB', code:'403'},data);
+                    }
+                    else {
+                        configuration['sender-email'] = data.Items[0].email;
+                    }
+            });
+
+        } else done({message:"Invalid resource path", code:'403'});
+
+        return configuration;
     };
 
-    dynamo.query(queryParams, function(err,data) {
-        if(err) {
-            console.log(err);
+
+
+    var validateToken = function(token, key, callback) {
+        var decipheredToken = "";
+        var username = "";
+        try { 
+            const decipher = crypto.createDecipher('aes192',key);
+            decipheredToken = decipher.update(token, 'hex', 'utf8');
+            decipheredToken += decipher.final('utf8');
+            username = JSON.parse(decipheredToken).username; // Check for valid JSON
+        } catch(err) {
             callback(null);
         }
+        console.log('DECIPHERED TOKEN:' + decipheredToken);
 
-        else {
-            console.log("QUERY RESULT:" + JSON.stringify(data.Items));
-            if(data.Items.length === 0) {
+        var queryParams = {
+            TableName : configuration['user-table'],
+            KeyConditionExpression: "#username = :user",
+            ExpressionAttributeNames:{
+                "#username": "username"
+            },
+            ExpressionAttributeValues: {
+                ":user":username
+            }
+        };
+
+        dynamo.query(queryParams, function(err,data) {
+            if(err) {
+                console.log(err);
                 callback(null);
             }
+
             else {
-                callback({username:data.Items[0].username,email:data.Items[0].email,firstname:data.Items[0].firstname,lastname:data.Items[0].lastname,verified:data.Items[0].verified});
+                console.log("QUERY RESULT:" + JSON.stringify(data.Items));
+                if(data.Items.length === 0) {
+                    callback(null);
+                }
+                else {
+                    callback({username:data.Items[0].username,email:data.Items[0].email,firstname:data.Items[0].firstname,lastname:data.Items[0].lastname,verified:data.Items[0].verified});
+                }
             }
-        }
-    });
-}
+        });
+    }
+
+};
+
 
 function validateFields(data) {
     console.log("VALIDATE FIELDS DATA:" + JSON.stringify(data));

@@ -19,7 +19,10 @@ $(function() {
         });
 
       });
-
+      bindOnce($("#logout-button"), function() { 
+              deleteCookie("token");
+              deleteCookie("username");
+          });
     
       /** boldify nav links */
       $(".update-content").each(function(index) {
@@ -27,11 +30,21 @@ $(function() {
         else $(this).css("font-weight","normal");
       });
 
+      
+
     });
 
     $(window).hashchange();
 
 });
+
+function bindOnce(button, callback) {
+  if(!button.hasClass("click-bound")) {
+    button.addClass("click-bound");
+    button.click(callback);
+  }
+}
+
 function onLoadHome() {
     validateAndRun(function(data) {
       //$("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
@@ -318,6 +331,10 @@ function readCookie(name) {
     }
     return null;
 }
+
+var deleteCookie = function(name) {
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+};
 
 //Validates the password for registering.
 function validatePassword(password) {
