@@ -36,7 +36,9 @@ exports.handler = (event, context, callback) => {
             // Get threads
             waterfall([
                     async.apply(setConfiguration, event),
-                    validateToken,
+                    decipherToken,
+                    checkExpTime,
+                    queryUserDB,
                     getThreads
                 ],
                 done);
@@ -61,7 +63,7 @@ function getThreads(event, configuration, callback) {
     };
     dynamo.scan(scanParams, function(err,data) {
         if(err) {
-            console.log(err);
+            console.log("Error while retrieving threads: " + err);
             callback(err,data);
         }
 
@@ -77,7 +79,7 @@ function getThreads(event, configuration, callback) {
 function setConfiguration(event, callback) {
 
     var configuration = {};
-    
+    console.log(event.resource.substring(1,5));
     if(event.resource.substring(1,5) == 'beta') {
         configuration['stage'] = 'beta';
         configuration['user-table'] = 'SD-user-beta';
@@ -147,15 +149,7 @@ function setConfiguration(event, callback) {
     } else callback({message:"Invalid resource path", code:'403'});
 
 }
-function validateToken(event, configuration, callback) {
-    waterfall([
-            async.apply(decipherToken, event, configuration),
-            checkExpTime,
-            queryUserDB,
-            callback
-        ],
-        callback);
-}
+
 
 function queryUserDB(event, configuration, token, callback) {
     console.log("queryUserDB() token:" + token.username);
@@ -183,7 +177,7 @@ function queryUserDB(event, configuration, token, callback) {
 
             }
             else {
-                callback(null,{username:data.Items[0].username,email:data.Items[0].email,firstname:data.Items[0].firstname,lastname:data.Items[0].lastname,verified:data.Items[0].verified});
+                callback(null,event, configuration);
             }
         }
     });

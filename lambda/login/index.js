@@ -1,5 +1,7 @@
 'use strict';
 var crypto = require('crypto');
+var async = require('async');
+var waterfall = require('async-waterfall');
 const doc = require('dynamodb-doc');
 const dynamo = new doc.DynamoDB();
 
