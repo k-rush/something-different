@@ -1,6 +1,7 @@
 'use strict';
 var crypto = require('crypto');
-
+var waterfall = require('async-waterfall');
+var async = require('async');
 var AWS = require('aws-sdk');
 AWS.config.update({region: 'us-west-2'});
 
@@ -22,19 +23,22 @@ exports.handler = (event, context, callback) => {
             'Access-Control-Allow-Origin': '*',
         },
     });
-    
-    var parsedBody;
-    try { 
-        parsedBody = JSON.parse(event.body);
-    } catch (err) { done({message:"Could not process event body"},null); }
-    console.log('Received event:', JSON.stringify(event, null, 2));
 
-    //Load beta or prod config
-    var configuration = {};
-    configuration = getConfiguration(event);
+    try { 
+        JSON.parse(event.body);
+    } catch (err) { done({message:"Could not process event body"},null); }
+
 
     switch (event.httpMethod) {
         case 'POST':
+
+            // Waterfall:
+            // Get configuration
+            // Validate token
+            // Scan user database
+
+
+
             
             validateToken(parsedBody.token, configuration['key'], function(userData) {
 

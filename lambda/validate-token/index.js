@@ -25,6 +25,10 @@ exports.handler = (event, context, callback) => {
         },
     });
 
+    try { 
+        JSON.parse(event.body);
+    } catch (err) { done({message:"Could not process event body"},null); }
+
     switch (event.httpMethod) {
         case 'POST':
             // Waterfall...

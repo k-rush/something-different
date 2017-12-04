@@ -113,7 +113,7 @@ exports.handler = (event, context, callback) => {
             dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Internal server error', code:'403'},data);
+                        done({message:'Internal server error', code:'500'},data);
                     }
                     else {
                         configuration['key'] = data.Items[0].Key;
@@ -126,7 +126,7 @@ exports.handler = (event, context, callback) => {
             dynamo.scan(keyQueryParams, function(err,data) {
                     if(err || data.Items.length === 0) {
                         console.log(err);
-                        done({message:'Internal server error', code:'403'},data);
+                        done({message:'Internal server error', code:'500'},data);
                     }
                     else {
                         configuration['sender-email'] = data.Items[0].email;

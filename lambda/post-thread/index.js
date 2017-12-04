@@ -1,6 +1,8 @@
 'use strict';
 var crypto = require('crypto');
 var AWS = require('aws-sdk');
+var waterfall = require('async-waterfall');
+var async = require('async');
 AWS.config.update({region: 'us-west-2'});
 
 const doc = require('dynamodb-doc');
@@ -12,7 +14,7 @@ const dynamo = new doc.DynamoDB();
  */
 exports.handler = (event, context, callback) => {
 
-    
+    console.log('Received event:', JSON.stringify(event, null, 2));
     const done = (err, res) => callback(null, {
         statusCode: err ? (err.code ? err.code : '400') : '200',
         body: err ? err.message : JSON.stringify(res),
@@ -22,171 +24,199 @@ exports.handler = (event, context, callback) => {
         },
     });
 
-    var parsedBody;
     try { 
-        parsedBody = JSON.parse(event.body);
+        JSON.parse(event.body);
     } catch (err) { done({message:"Could not process event body"},null); }
-    console.log('Received event:', JSON.stringify(event, null, 2));
     
-    //Load beta or prod config
-    var configuration = {};
-    configuration = getConfiguration(event);
     
     switch (event.httpMethod) {
         case 'POST':
-            //Query DB to see if username exists...
-            var parsedToken;
-            if(!validateFields(parsedBody)) done({message:"Invalid fields, please validate client-side before sending me shit data, scrub."});
-            
-            validateToken(parsedBody.token, , configuration['key'], function(data) {
-                if(!data) done({code:'403', message:'Could not validate token.'});
 
-                var timeString = new Date().getTime().toString();
+            //Waterfall:
+            // Validate token
+            // Validate fields
+            // Sanitize inputs
+            // Put thread into DB
+            waterfall([
+                async.apply(setConfiguration, event),
+                decipherToken,
+                checkExpTime,
+                queryUserDB,
 
-                console.log("\nPARSED BODY:" + parsedBody.subject + " " + data.username + " " + parsedBody.body + " " + timeString);
-                
-                var params = {
-                    TableName : configuration['thread-table'],
-                    Item : {"Subject": parsedBody.subject, "PostedBy":data.username, "Body":parsedBody.body, "Time":timeString}
-                };
-
-                dynamo.putItem(params, function(err, data) {
-                    done(err,data);
-                });
-                            
-            });
+                validateFields,
+                sanitizeInputs,
+                putThread
+                ],
+                done);
             
             break;
         default:
             done(new Error(`Unsupported method "${event.httpMethod}"`));
     }
 
-    //Sets configuration based on dev stage
-    function getConfiguration(event) {
-
-        var configuration = {};
-        console.log(event.resource.substring(1,5));
-        if(event.resource.substring(1,5) == 'beta') {
-            configuration['stage'] = 'beta';
-            configuration['user-table'] = 'SD-user-beta';
-            configuration['reply-table'] = 'SD-reply-beta';
-            configuration['thread-table'] = 'SD-thread-beta';
-
-
-            var keyQueryParams = {
-                    TableName : 'SD-beta-key'
-            };
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['key'] = data.Items[0].Key;
-                    }
-            });
-
-            keyQueryParams = {
-                    TableName : 'SD-beta-sender-email'
-            };
-
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['sender-email'] = data.Items[0].email;
-                    }
-            });
-        } else if(event.resource.substring(1,5) == 'prod') {
-            configuration['stage'] = 'prod';
-            configuration['user-table'] = 'SD-user';
-
-            var keyQueryParams = {
-                    TableName : 'SD-beta-key',
-            };
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'403'},data);
-                    }
-                    else {
-                        configuration['key'] = data.Items[0].Key;
-                    }
-            });
-            keyQueryParams = {
-                    TableName : 'SD-sender-email',
-            };
-
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'403'},data);
-                    }
-                    else {
-                        configuration['sender-email'] = data.Items[0].email;
-                    }
-            });
-
-        } else done({message:"Invalid resource path", code:'403'});
-
-        return configuration;
-    };
-
-
-
-    function validateToken(token, key, callback) {
-        var decipheredToken = "";
-        var username = "";
-        try { 
-            const decipher = crypto.createDecipher('aes192',key);
-            decipheredToken = decipher.update(token, 'hex', 'utf8');
-            decipheredToken += decipher.final('utf8');
-            username = JSON.parse(decipheredToken).username; // Check for valid JSON
-        } catch(err) {
-            callback(null);
-        }
-        console.log('DECIPHERED TOKEN:' + decipheredToken);
-
-        var queryParams = {
-            TableName : configuration['user-table'],
-            KeyConditionExpression: "#username = :user",
-            ExpressionAttributeNames:{
-                "#username": "username"
-            },
-            ExpressionAttributeValues: {
-                ":user":username
-            }
-        };
-
-        dynamo.query(queryParams, function(err,data) {
-            if(err) {
-                console.log(err);
-                callback(null);
-            }
-
-            else {
-                console.log("QUERY RESULT:" + JSON.stringify(data.Items));
-                if(data.Items.length === 0) {
-                    callback(null);
-                }
-                else {
-                    callback({username:data.Items[0].username,email:data.Items[0].email,firstname:data.Items[0].firstname,lastname:data.Items[0].lastname,verified:data.Items[0].verified});
-                }
-            }
-        });
-    }
 
 };
 
 
-function validateFields(data) {
-    console.log("VALIDATE FIELDS DATA:" + JSON.stringify(data));
-    return (isString(data.token) && isString(data.body)&& isString(data.subject));                         
+function validateFields(event, configuration, username, callback) {
+    var body = JSON.parse(event.body);
+    if (isString(username) && isString(body.body)&& isString(body.subject))
+        callback(null, event, configuration, username);
+    else callback({message:"Invalid fields."});                         
 }
 
 /** Tests typeof data is string */
 function isString(data) {
     return (typeof data === 'string');
+}
+
+
+//Sets configuration based on dev stage
+function setConfiguration(event, callback) {
+
+    var configuration = {};
+    
+    if(event.resource.substring(1,5) == 'beta') {
+        configuration['stage'] = 'beta';
+        configuration['user-table'] = 'SD-user-beta';
+        configuration['reply-table'] = 'SD-reply-beta';
+        configuration['thread-table'] = 'SD-thread-beta';
+        configuration['email-subject'] = 'Verify your email address for Something Different';
+
+
+        var keyQueryParams = {
+                TableName : 'SD-beta-key'
+        };
+        dynamo.scan(keyQueryParams, function(err,data) {
+                if(err || data.Items.length === 0) {
+                    console.log(err);
+                    callback({message:'Internal server error', code:'500'},data);
+                }
+                else {
+                    configuration['key'] = data.Items[0].Key;
+                    var emailQueryParams = {
+                        TableName : 'SD-beta-sender-email',
+                    };
+
+                    dynamo.scan(emailQueryParams, function(err,data) {
+                            if(err || data.Items.length === 0) {
+                                console.log(err);
+                                callback({message:'Internal server error', code:'500'},data);
+                            }
+                            else {
+                                configuration['sender-email'] = data.Items[0].email;
+                                callback(null, event, configuration)
+                            }
+                    });
+                }
+        });
+
+        
+    } else if(event.resource.substring(1,5) == 'prod') {
+        configuration['stage'] = 'prod';
+        configuration['user-table'] = 'SD-user';
+
+        var keyQueryParams = {
+                TableName : 'SD-beta-key',
+        };
+        dynamo.scan(keyQueryParams, function(err,data) {
+                if(err || data.Items.length === 0) {
+                    console.log(err);
+                    callback({message:'Internal server error', code:'500'},data);
+                }
+                else {
+                    configuration['key'] = data.Items[0].Key;
+                    var emailQueryParams = {
+                        TableName : 'SD-sender-email',
+                    };
+
+                    dynamo.scan(emailQueryParams, function(err,data) {
+                            if(err || data.Items.length === 0) {
+                                console.log(err);
+                                callback({message:'Internal server error', code:'500'},data);
+                            }
+                            else {
+                                configuration['sender-email'] = data.Items[0].email;
+                                callback(null, event, configuration);
+                            }
+                    });
+                }
+        });
+
+    } else callback({message:"Invalid resource path", code:'500'});
+
+}
+
+function queryUserDB(event, configuration, token, callback) {
+    console.log("queryUserDB() token:" + token.username);
+    var queryParams = {
+        TableName : configuration['user-table'],
+        KeyConditionExpression: "#username = :user",
+        ExpressionAttributeNames:{
+            "#username": "username"
+        },
+        ExpressionAttributeValues: {
+            ":user":token.username
+        }
+    };
+
+    dynamo.query(queryParams, function(err,data) {
+        if(err) {
+            console.log(err);
+            callback(err,data);
+        }
+
+        else {
+            console.log("QUERY RESULT:" + JSON.stringify(data.Items));
+            if(data.Items.length === 0) {
+                callback({code: '403', message: "Incorrect username"});
+
+            }
+            else {
+                callback(null,event, configuration, data.Items[0].username);
+            }
+        }
+    });
+}
+
+//TODO ... Check to see if token expiration time has exceeded the current time
+function checkExpTime(event, configuration, token, callback) {
+    var timeString = new Date().getTime().toString();
+    callback(null, event, configuration, token);
+}
+
+function decipherToken(event, configuration, callback) {
+    const token = JSON.parse(event.body).token;
+    console.log("Token: " + token);
+    var decipheredToken = "";
+    var username = "";
+    try { 
+        console.log(configuration['key']);
+        const decipher = crypto.createDecipher('aes192',configuration['key']);
+        decipheredToken = decipher.update(token, 'hex', 'utf8');
+        decipheredToken += decipher.final('utf8');
+        username = JSON.parse(decipheredToken).username; // Check for valid JSON
+    } catch(err) {
+        callback({code: '403', message: "Could not decipher token"});
+    }
+    console.log('DECIPHERED TOKEN:' + decipheredToken);
+    callback(null, event, configuration, JSON.parse(decipheredToken));
+}
+
+//TODO Sanitize inputs
+function sanitizeInputs(event, configuration, username, callback) {
+    callback(null, event, configuration, username);
+}
+
+function putThread(event, configuration, username, callback) {
+    var timeString = new Date().getTime().toString();
+    var body = JSON.parse(event.body);
+    var params = {
+        TableName : configuration['thread-table'],
+        Item : {"Subject": body.subject, "PostedBy":username, "Body":body.body, "Time":timeString}
+    };
+
+    dynamo.putItem(params, function(err, data) {
+        callback(err,data);
+    });
 }

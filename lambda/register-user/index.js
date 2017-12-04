@@ -14,9 +14,6 @@ const dynamo = new doc.DynamoDB();
  */
 exports.handler = (event, context, callback) => {
 
-    console.log('Received event:', JSON.stringify(event, null, 2));
-    console.log('username',JSON.parse(event.body).username);
-    
     
     const done = (err, res) => callback(null, {
         statusCode: err ? (err.code ? err.code : '400') : '200',
@@ -26,6 +23,10 @@ exports.handler = (event, context, callback) => {
             'Access-Control-Allow-Origin': '*',
         },
     });
+
+    try { 
+        JSON.parse(event.body);
+    } catch (err) { done({message:"Could not process event body"},null); }
 
     
     switch (event.httpMethod) {
