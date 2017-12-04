@@ -92,6 +92,7 @@ function checkExpTime(event, configuration, token, callback) {
 
 function decipherToken(event, configuration, callback) {
     const token = JSON.parse(event.body).token;
+    if(typeof token !== "string") callback({message:"Could not decipher token.", code:'400'})
     console.log("Token: " + token);
     var decipheredToken = "";
     var username = "";
@@ -101,11 +102,11 @@ function decipherToken(event, configuration, callback) {
         decipheredToken = decipher.update(token, 'hex', 'utf8');
         decipheredToken += decipher.final('utf8');
         username = JSON.parse(decipheredToken).username; // Check for valid JSON
+        callback(null, event, configuration, JSON.parse(decipheredToken));
     } catch(err) {
         callback({code: '403', message: "Could not decipher token"});
     }
-    console.log('DECIPHERED TOKEN:' + decipheredToken);
-    callback(null, event, configuration, JSON.parse(decipheredToken));
+    
 }
     
 

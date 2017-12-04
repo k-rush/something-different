@@ -1,10 +1,12 @@
 'use strict';
 var crypto = require('crypto');
 const doc = require('dynamodb-doc');
+var waterfall = require('async-waterfall');
+var async = require('async');
 const dynamo = new doc.DynamoDB();
 
 /**
- * Validates authentication token from client.
+ * Will verify a token emailed to user upon registration.
  */
 exports.handler = (event, context, callback) => {
 
@@ -16,127 +18,152 @@ exports.handler = (event, context, callback) => {
             'Access-Control-Allow-Origin': '*',
         },
     });
-    
-    //Load beta or prod config
-    var configuration = {};
-    configuration = getConfiguration(event);
 
     switch (event.httpMethod) {
         case 'GET':
-            const token = event.queryStringParameters.token;
-            console.log("Token: " + token);
-            const decipher = crypto.createDecipher('aes192',configuration['key']);
-            var decipheredToken = "";
-            var parsedToken = "";
-            try {
-                decipheredToken = decipher.update(token, 'hex', 'utf8');
-                decipheredToken += decipher.final('utf8');
-                console.log('DECIPHERED TOKEN:' + decipheredToken);
-                parsedToken = JSON.parse(decipheredToken);
-            } catch (err) {
-                callback(null, {statusCode: '403', body: "Could not decipher token", headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}});
-            }
-            
-            
-            var params = {
-                TableName:configuration['user-table'],
-                Key:{
-                    "username":parsedToken.username
-                },
-                UpdateExpression: "set verified = :v",
-                ExpressionAttributeValues:{
-                    ":v":true
-                },
-                ReturnValues:"UPDATED_NEW"
-            };
 
-            dynamo.updateItem(params, function(err, data) {
-                if (err) {
-                    done(err,null);
-                    console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
-                } else {
-                    console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
-                    done(null,"Email succesfully validated.");
-                }
-            });
-            
+            //Waterfall
+            // Set config
+            // decipher token
+            // update DB entry
+
+            waterfall([
+                async.apply(setConfiguration, event),
+                decipherToken,
+                updateUser
+                ], done);
+
             break;
         default:
             done(new Error(`Unsupported method "${event.httpMethod}"`));
     }
 
-    //Sets configuration based on dev stage
-    function getConfiguration(event) {
-
-        var configuration = {};
-        console.log(event.resource.substring(1,5));
-        if(event.resource.substring(1,5) == 'beta') {
-            configuration['stage'] = 'beta';
-            configuration['user-table'] = 'SD-user-beta';
-            configuration['reply-table'] = 'SD-reply-beta';
-            configuration['thread-table'] = 'SD-thread-beta';
-
-
-            var keyQueryParams = {
-                    TableName : 'SD-beta-key'
-            };
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['key'] = data.Items[0].Key;
-                    }
-            });
-
-            keyQueryParams = {
-                    TableName : 'SD-beta-sender-email'
-            };
-
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['sender-email'] = data.Items[0].email;
-                    }
-            });
-        } else if(event.resource.substring(1,5) == 'prod') {
-            configuration['stage'] = 'prod';
-            configuration['user-table'] = 'SD-user';
-
-            var keyQueryParams = {
-                    TableName : 'SD-beta-key',
-            };
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['key'] = data.Items[0].Key;
-                    }
-            });
-            keyQueryParams = {
-                    TableName : 'SD-sender-email',
-            };
-
-            dynamo.scan(keyQueryParams, function(err,data) {
-                    if(err || data.Items.length === 0) {
-                        console.log(err);
-                        done({message:'Internal server error', code:'500'},data);
-                    }
-                    else {
-                        configuration['sender-email'] = data.Items[0].email;
-                    }
-            });
-
-        } else done({message:"Invalid resource path", code:'403'});
-
-        return configuration;
-    };
-
 
 };
+
+//TODO ... Check to see if token expiration time has exceeded the current time
+function checkExpTime(event, configuration, token, callback) {
+    callback(null, event, configuration, token);
+}
+
+//Decipher verification token
+function decipherToken(event, configuration, callback) {
+    const token = event.queryStringParameters.token;
+    if(typeof token !== "string") callback({message:"Could not decipher token.", code:'400'})
+    console.log("Token: " + token);
+    var decipheredToken = "";
+    var username = "";
+    try { 
+        console.log(configuration['key']);
+        const decipher = crypto.createDecipher('aes192',configuration['key']);
+        decipheredToken = decipher.update(token, 'hex', 'utf8');
+        decipheredToken += decipher.final('utf8');
+        username = JSON.parse(decipheredToken).username; // Check for valid JSON
+        callback(null, event, configuration, JSON.parse(decipheredToken));
+    } catch(err) {
+        callback({code: '403', message: "Could not decipher token"});
+    }
+    
+}
+
+function updateUser(event, configuration, token, callback) {
+    var params = {
+        TableName:configuration['user-table'],
+        Key:{
+            "username":token.username
+        },
+        UpdateExpression: "set verified = :v",
+        ExpressionAttributeValues:{
+            ":v":true
+        },
+        ReturnValues:"UPDATED_NEW"
+    };
+
+    dynamo.updateItem(params, function(err, data) {
+        if (err) {
+            err.code = '500';
+            console.error("Unable to update item. Error:", JSON.stringify(err, null, 2));
+            callback(err,null);
+        } else {
+            console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+            callback(null,"Email succesfully validated.");
+        }
+    });
+
+}
+
+//Sets configuration based on dev stage
+function setConfiguration(event, callback) {
+
+    var configuration = {};
+    
+    if(event.resource.substring(1,5) == 'beta') {
+        configuration['stage'] = 'beta';
+        configuration['user-table'] = 'SD-user-beta';
+        configuration['reply-table'] = 'SD-reply-beta';
+        configuration['thread-table'] = 'SD-thread-beta';
+        configuration['email-subject'] = 'Verify your email address for Something Different';
+
+
+        var keyQueryParams = {
+                TableName : 'SD-beta-key'
+        };
+        dynamo.scan(keyQueryParams, function(err,data) {
+                if(err || data.Items.length === 0) {
+                    console.log(err);
+                    callback({message:'Internal server error', code:'500'},data);
+                }
+                else {
+                    configuration['key'] = data.Items[0].Key;
+                    var emailQueryParams = {
+                        TableName : 'SD-beta-sender-email',
+                    };
+
+                    dynamo.scan(emailQueryParams, function(err,data) {
+                            if(err || data.Items.length === 0) {
+                                console.log(err);
+                                callback({message:'Internal server error', code:'403'},data);
+                            }
+                            else {
+                                configuration['sender-email'] = data.Items[0].email;
+                                callback(null, event, configuration)
+                            }
+                    });
+                }
+        });
+
+        
+    } else if(event.resource.substring(1,5) == 'prod') {
+        configuration['stage'] = 'prod';
+        configuration['user-table'] = 'SD-user';
+
+        var keyQueryParams = {
+                TableName : 'SD-beta-key',
+        };
+        dynamo.scan(keyQueryParams, function(err,data) {
+                if(err || data.Items.length === 0) {
+                    console.log(err);
+                    callback({message:'Internal server error', code:'403'},data);
+                }
+                else {
+                    configuration['key'] = data.Items[0].Key;
+                    var emailQueryParams = {
+                        TableName : 'SD-sender-email',
+                    };
+
+                    dynamo.scan(emailQueryParams, function(err,data) {
+                            if(err || data.Items.length === 0) {
+                                console.log(err);
+                                callback({message:'Internal server error', code:'403'},data);
+                            }
+                            else {
+                                configuration['sender-email'] = data.Items[0].email;
+                                callback(null, event, configuration);
+                            }
+                    });
+                }
+        });
+
+    } else callback({message:"Invalid resource path", code:'403'});
+
+}

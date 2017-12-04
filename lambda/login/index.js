@@ -156,7 +156,8 @@ function checkPassword(event, configuration, user, callback) {
     //Compute new hash and compare it to the one in DB.
     const hash = crypto.createHash('sha256');
     hash.update(body.password + user.salt);
-    if(user.password.password != hash.digest('hex')) {
+    if(user.password != hash.digest('hex')) {
+        console.log(err);
         callback({message:"Username or password incorrect.", code:"403"},user);
     }
     else {
