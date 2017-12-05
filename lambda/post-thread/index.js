@@ -46,7 +46,7 @@ exports.handler = (event, context, callback) => {
 
                 validateFields,
                 sanitizeInputs,
-                putReply
+                putThread
                 ],
                 done);
             
@@ -83,7 +83,6 @@ function setConfiguration(event, callback) {
         configuration['user-table'] = 'SD-user-beta';
         configuration['reply-table'] = 'SD-reply-beta';
         configuration['thread-table'] = 'SD-thread-beta';
-        configuration['email-subject'] = 'Verify your email address for Something Different';
 
 
         var keyQueryParams = {
