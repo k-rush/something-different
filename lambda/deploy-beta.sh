@@ -3,7 +3,7 @@
 #remove zip
 echo "REMOVING PERVIOUS DEPLOYMENT PACKAGES"
 
-rm login-beta.zip register-user-beta.zip verify-email-beta.zip get-users-beta.zip post-thread-beta.zip get-threads-beta.zip
+rm login-beta.zip register-user-beta.zip verify-email-beta.zip get-users-beta.zip post-thread-beta.zip get-threads-beta.zip post-reply-beta.zip
 
 #make new zip
 echo "ZIPPING DEPLOYMENT PACKAGES"
@@ -36,6 +36,10 @@ pushd /home/kyle/Documents/code/something-different/lambda/get-threads
 zip -r ../get-threads-beta.zip *
 popd
 
+pushd /home/kyle/Documents/code/something-different/lambda/post-reply
+zip -r ../post-reply-beta.zip *
+popd
+
 #delpoy
 echo "DEPLOYING PACKAGES TO AWS LAMBDA"
 aws lambda update-function-code --function-name SD-login-beta --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/login-beta.zip
@@ -45,3 +49,4 @@ aws lambda update-function-code --function-name SD-validate-token-beta --zip-fil
 aws lambda update-function-code --function-name SD-get-users-beta --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/get-users-beta.zip
 aws lambda update-function-code --function-name SD-post-thread-beta --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/post-thread-beta.zip
 aws lambda update-function-code --function-name SD-get-threads-beta --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/get-threads-beta.zip
+aws lambda update-function-code --function-name SD-post-reply-beta --zip-file fileb:///home/kyle/Documents/code/something-different/lambda/post-reply-beta.zip

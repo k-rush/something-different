@@ -3,6 +3,7 @@ var crypto = require('crypto');
 var AWS = require('aws-sdk');
 var waterfall = require('async-waterfall');
 var async = require('async');
+const uuidv1 = require('uuid/v1');
 AWS.config.update({region: 'us-west-2'});
 
 const doc = require('dynamodb-doc');
@@ -36,7 +37,7 @@ exports.handler = (event, context, callback) => {
             // Validate token
             // Validate fields
             // Sanitize inputs
-            // Put thread into DB
+            // Put reply into DB
             waterfall([
                 async.apply(setConfiguration, event),
                 decipherToken,
@@ -45,7 +46,7 @@ exports.handler = (event, context, callback) => {
 
                 validateFields,
                 sanitizeInputs,
-                putThread
+                putReply
                 ],
                 done);
             
@@ -60,8 +61,9 @@ exports.handler = (event, context, callback) => {
 
 function validateFields(event, configuration, username, callback) {
     var body = JSON.parse(event.body);
-    if (isString(username) && isString(body.body)&& isString(body.subject))
+    if (isString(username) && isString(body.body)&& isString(body.subject)) 
         callback(null, event, configuration, username);
+    
     else callback({message:"Invalid fields."});                         
 }
 
@@ -211,9 +213,10 @@ function sanitizeInputs(event, configuration, username, callback) {
 function putThread(event, configuration, username, callback) {
     var timeString = new Date().getTime().toString();
     var body = JSON.parse(event.body);
+    var uuid = uuidv1();
     var params = {
         TableName : configuration['thread-table'],
-        Item : {"Subject": body.subject, "PostedBy":username, "Body":body.body, "Time":timeString}
+        Item : {"Id":uuid, "Subject": body.subject, "PostedBy":username, "Body":body.body, "Time":timeString}
     };
 
     dynamo.putItem(params, function(err, data) {
