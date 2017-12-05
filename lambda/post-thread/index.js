@@ -117,6 +117,7 @@ function setConfiguration(event, callback) {
     } else if(event.resource.substring(1,5) == 'prod') {
         configuration['stage'] = 'prod';
         configuration['user-table'] = 'SD-user';
+        configuration['thread-table'] = 'SD-thread';
 
         var keyQueryParams = {
                 TableName : 'SD-beta-key',

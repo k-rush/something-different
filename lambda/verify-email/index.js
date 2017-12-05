@@ -100,9 +100,6 @@ function setConfiguration(event, callback) {
     if(event.resource.substring(1,5) == 'beta') {
         configuration['stage'] = 'beta';
         configuration['user-table'] = 'SD-user-beta';
-        configuration['reply-table'] = 'SD-reply-beta';
-        configuration['thread-table'] = 'SD-thread-beta';
-        configuration['email-subject'] = 'Verify your email address for Something Different';
 
 
         var keyQueryParams = {

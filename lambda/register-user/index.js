@@ -135,9 +135,6 @@ function setConfiguration(event, callback) {
     if(event.resource.substring(1,5) == 'beta') {
         configuration['stage'] = 'beta';
         configuration['user-table'] = 'SD-user-beta';
-        configuration['reply-table'] = 'SD-reply-beta';
-        configuration['thread-table'] = 'SD-thread-beta';
-        configuration['email-subject'] = 'Verify your email address for Something Different';
         configuration['API'] = 'https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/';
 
 
@@ -172,6 +169,7 @@ function setConfiguration(event, callback) {
     } else if(event.resource.substring(1,5) == 'prod') {
         configuration['stage'] = 'prod';
         configuration['user-table'] = 'SD-user';
+        configuration['API'] = 'https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/prod/';
 
         var keyQueryParams = {
                 TableName : 'SD-beta-key',

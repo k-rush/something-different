@@ -86,7 +86,6 @@ function setConfiguration(event, callback) {
     if(event.resource.substring(1,5) == 'beta') {
         configuration['stage'] = 'beta';
         configuration['user-table'] = 'SD-user-beta';
-        configuration['reply-table'] = 'SD-reply-beta';
         configuration['thread-table'] = 'SD-thread-beta';
 
 
@@ -107,7 +106,7 @@ function setConfiguration(event, callback) {
                     dynamo.scan(emailQueryParams, function(err,data) {
                             if(err || data.Items.length === 0) {
                                 console.log(err);
-                                callback({message:'Internal server error', code:'403'},data);
+                                callback({message:'Internal server error', code:'500'},data);
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
@@ -121,6 +120,7 @@ function setConfiguration(event, callback) {
     } else if(event.resource.substring(1,5) == 'prod') {
         configuration['stage'] = 'prod';
         configuration['user-table'] = 'SD-user';
+        configuration['thread-table'] = 'SD-thread';
 
         var keyQueryParams = {
                 TableName : 'SD-beta-key',
@@ -128,7 +128,7 @@ function setConfiguration(event, callback) {
         dynamo.scan(keyQueryParams, function(err,data) {
                 if(err || data.Items.length === 0) {
                     console.log(err);
-                    callback({message:'Internal server error', code:'403'},data);
+                    callback({message:'Internal server error', code:'500'},data);
                 }
                 else {
                     configuration['key'] = data.Items[0].Key;
@@ -139,7 +139,7 @@ function setConfiguration(event, callback) {
                     dynamo.scan(emailQueryParams, function(err,data) {
                             if(err || data.Items.length === 0) {
                                 console.log(err);
-                                callback({message:'Internal server error', code:'403'},data);
+                                callback({message:'Internal server error', code:'500'},data);
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;

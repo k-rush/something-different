@@ -46,7 +46,7 @@ exports.handler = (event, context, callback) => {
 
                 validateFields,
                 sanitizeInputs,
-                putThread
+                putReply
                 ],
                 done);
             
@@ -61,7 +61,7 @@ exports.handler = (event, context, callback) => {
 
 function validateFields(event, configuration, username, callback) {
     var body = JSON.parse(event.body);
-    if (isString(body.threadId) && isString(username) && isString(body.body)&& isString(body.subject)) {
+    if (isString(body.threadId) && isString(username) && isString(body.body)) {
             //Check if thread ID matches thread in DB...
         var queryParams = {
             TableName : configuration['thread-table'],
@@ -112,7 +112,6 @@ function setConfiguration(event, callback) {
         configuration['user-table'] = 'SD-user-beta';
         configuration['reply-table'] = 'SD-reply-beta';
         configuration['thread-table'] = 'SD-thread-beta';
-        configuration['email-subject'] = 'Verify your email address for Something Different';
 
 
         var keyQueryParams = {
@@ -146,6 +145,8 @@ function setConfiguration(event, callback) {
     } else if(event.resource.substring(1,5) == 'prod') {
         configuration['stage'] = 'prod';
         configuration['user-table'] = 'SD-user';
+        configuration['reply-table'] = 'SD-reply';
+        configuration['thread-table'] = 'SD-thread';
 
         var keyQueryParams = {
                 TableName : 'SD-beta-key',
@@ -239,13 +240,13 @@ function sanitizeInputs(event, configuration, username, callback) {
     callback(null, event, configuration, username);
 }
 
-function putThread(event, configuration, username, callback) {
+function putReply(event, configuration, username, callback) {
     var timeString = new Date().getTime().toString();
     var body = JSON.parse(event.body);
     var uuid = uuidv1();
     var params = {
         TableName : configuration['reply-table'],
-        Item : {"Id":uuid, "ThreadId": body.threadId, "Subject": body.subject, "PostedBy":username, "Body":body.body, "Time":timeString}
+        Item : {"Id":uuid, "ThreadId": body.threadId, "PostedBy":username, "Body":body.body, "Time":timeString}
     };
 
     dynamo.putItem(params, function(err, data) {
