@@ -66,7 +66,7 @@ function onLoadHome() {
       data.sort(compareTimes);
       data.forEach(function(element){
         $("#threads").append(
-          "<div class='row-fluid thread-div'>" +
+          "<div class='row-fluid thread-div' id='t" + element.Id + "'>" +
               "<div class='row-fluid subject-div'>" + element.Subject + "</div>" +
               "<div class='row-fluid body-div'>" + element.Body + "</div>" +
               "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
@@ -86,9 +86,29 @@ function onLoadHome() {
         getReplies(formdata, repliesDiv);
       });
 
+      /*
+       * Trying out toggling the expansion of threads..
+
+      bindOnce($(".thread-div"), function() {
+        var formdata = {};
+        formdata.token = readCookie('token'),
+        formdata.threadId = $(this).attr('id').substring(1); 
+        var repliesDiv = $('#replies-' + $(this).attr('id').substring(1));
+        if(repliesDiv.hasClass('expanded')) {
+          repliesDiv.empty();
+          repliesDiv.removeClass('expanded');
+        }
+        else { 
+          getReplies(formdata, repliesDiv);
+        }
+      });
+
+      */
+
       bindOnce($(".retract-button"), function() {
         var repliesDiv = '#replies-' + $(this).attr('id').substring(8);
         $(repliesDiv).empty();
+        repliesDiv.removeClass('expanded');
       });
 
       bindOnce($(".reply-button"), function() {
@@ -191,6 +211,7 @@ function getReplies(formdata, repliesDiv) {
                 "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
             "</div><br>");
         } );
+        repliesDiv.addClass('expanded');
       },
       error: function(xhr, textStatus, err) {
         console.log("ERROR " + JSON.stringify(xhr));
