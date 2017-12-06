@@ -92,7 +92,7 @@ function checkExpTime(event, configuration, token, callback) {
 
 function decipherToken(event, configuration, callback) {
     const token = JSON.parse(event.body).token;
-    if(typeof token !== "string") callback({message:"Could not decipher token.", code:'400'})
+    if(typeof token !== "string") callback({message:"Could not decipher token.", code:'403'});
     console.log("Token: " + token);
     var decipheredToken = "";
     var username = "";
@@ -137,7 +137,7 @@ function setConfiguration(event, callback) {
                     dynamo.scan(emailQueryParams, function(err,data) {
                             if(err || data.Items.length === 0) {
                                 console.log(err);
-                                callback({message:'Internal server error', code:'403'},data);
+                                callback({message:'Internal server error', code:'500'},data);
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
@@ -158,7 +158,7 @@ function setConfiguration(event, callback) {
         dynamo.scan(keyQueryParams, function(err,data) {
                 if(err || data.Items.length === 0) {
                     console.log(err);
-                    callback({message:'Internal server error', code:'403'},data);
+                    callback({message:'Internal server error', code:'500'},data);
                 }
                 else {
                     configuration['key'] = data.Items[0].Key;
@@ -169,7 +169,7 @@ function setConfiguration(event, callback) {
                     dynamo.scan(emailQueryParams, function(err,data) {
                             if(err || data.Items.length === 0) {
                                 console.log(err);
-                                callback({message:'Internal server error', code:'403'},data);
+                                callback({message:'Internal server error', code:'500'},data);
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
@@ -179,6 +179,6 @@ function setConfiguration(event, callback) {
                 }
         });
 
-    } else callback({message:"Invalid resource path", code:'403'});
+    } else callback({message:"Invalid resource path", code:'500'});
 
 }

@@ -27,7 +27,7 @@ exports.handler = (event, context, callback) => {
     });
 
     try { 
-        JSON.parse(event.body);
+        JSON.parse(event.body).token;
     } catch (err) { done({message:"Could not process event body"},null); }
 
     switch (event.httpMethod) {
@@ -157,7 +157,7 @@ function setConfiguration(event, callback) {
                 }
         });
 
-    } else callback({message:"Invalid resource path", code:'403'});
+    } else callback({message:"Invalid resource path", code:'500'});
 
 }
 
@@ -201,6 +201,7 @@ function checkExpTime(event, configuration, token, callback) {
 
 function decipherToken(event, configuration, callback) {
     const token = JSON.parse(event.body).token;
+    if(typeof token !== "string") callback({message:"Could not decipher token.", code:'403'});
     console.log("Token: " + token);
     var decipheredToken = "";
     var username = "";
@@ -210,9 +211,10 @@ function decipherToken(event, configuration, callback) {
         decipheredToken = decipher.update(token, 'hex', 'utf8');
         decipheredToken += decipher.final('utf8');
         username = JSON.parse(decipheredToken).username; // Check for valid JSON
+        console.log('DECIPHERED TOKEN:' + decipheredToken);
+        callback(null, event, configuration, JSON.parse(decipheredToken));
     } catch(err) {
         callback({code: '403', message: "Could not decipher token"});
     }
-    console.log('DECIPHERED TOKEN:' + decipheredToken);
-    callback(null, event, configuration, JSON.parse(decipheredToken));
+    
 }
