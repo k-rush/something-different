@@ -1,4 +1,4 @@
-const API = "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/prod/";
+const API = "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/";
 
 //Window hashchange function
 $(function() {
@@ -18,6 +18,7 @@ $(function() {
           else if (url == "login.html") onLoadLogin();
           else if (url == "register.html") onLoadRegister();
           else if (url == "people.html") onLoadPeople();
+          else if (url == "files.html") onLoadFiles();
         });
 
       });
@@ -70,7 +71,8 @@ function onLoadHome() {
               "<div class='row-fluid body-div'>" + element.Body + "</div>" +
               "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
               "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
-              "<input id='e" + element.Id + "' class='expand-button' value='expand' type='button' />" + 
+              "<input id='e" + element.Id + "' class='expand-button' value='expand' type='button' /><br>" + 
+              "<input id='b" + element.Id + "' class='expand-button' type='textarea' /><br>" +
               "<input id='r" + element.Id + "' class='reply-button' value='reply' type='button' />" +
           "</div><br>");
       });
@@ -112,7 +114,7 @@ function onLoadHome() {
         var formdata = {};
         formdata.token = readCookie('token');
         formdata.threadId = $(this).attr('id').substring(1);
-        formdata.body = $("#thread-body-input").val();
+        formdata.body = $("#b" + $(this).attr('id').substring(1)).val();
 
         $.ajax( 
           {
@@ -214,6 +216,48 @@ function onLoadPeople() {
           //Error callback of API call
           console.log("ERROR " + JSON.stringify(xhr));
           if(xhr.status == 403) window.location.hash = "#login.html";
+
+        }
+
+  });
+}
+
+function onLoadFiles() {
+  
+  $.ajax( 
+      {
+        method: "GET",
+        url: "http://something-different.s3.amazonaws.com",
+        dataType: "json",
+        crossdomain: true,
+        async:true, 
+        statusCode : {
+          403 : function() {
+            window.location.hash = "#login.html";
+          }
+        },
+        success: function(data, textStatus, xhr) {
+          //Success callback of API call
+          console.log("SUCCESS " + JSON.stringify(data) + "\n");
+          var parser = new DOMParser();
+          var response = parser.parseFromString(data,"text/xml");
+          $("#files-content").append(response.getElementsByTagName("Key")[0].childNodes[0].nodeValue);
+
+        },
+        error: function(xhr, textStatus, err) {
+          //Error callback of API call
+          console.log("ERROR " + JSON.stringify(xhr));
+          if(xhr.status == 403) window.location.hash = "#login.html";
+
+          //TODO: why am I getting 200 status and error callback?
+          if(xhr.status == 200) {
+            var parser = new DOMParser();
+            var response = parser.parseFromString(xhr.responseText,"text/xml");
+            var fileKeys = response.getElementsByTagName("Key");
+            for(var i = 0; i < fileKeys.length; i++) {
+              $("#files-content").append('<a href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br>');
+            }
+          }
 
         }
 
