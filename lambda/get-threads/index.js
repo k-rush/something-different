@@ -59,7 +59,7 @@ exports.handler = (event, context, callback) => {
 function getThreads(event, configuration, callback) {
     var scanParams = {
         TableName: configuration['thread-table'],
-        ProjectionExpression: "PostedBy, Subject, Body, #t",
+        ProjectionExpression: "PostedBy, Subject, Body, #t, Id",
         ExpressionAttributeNames: {
             "#t": "Time",
         }

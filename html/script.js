@@ -64,12 +64,76 @@ function onLoadHome() {
             data.sort(compareTimes);
             data.forEach(function(element){
               $("#threads").append(
-                `<div class='row-fluid thread-div'> 
-                    <div class='row-fluid subject-div'>` + element.Subject + "</div>" +
-                    `<div class='row-fluid body-div'>` + element.Body + "</div>" +
-                    `<div class='row-fluid posteby-div'>Posted by: ` + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + `</div>
-                </div><br>`);
-            } );
+                "<div class='row-fluid thread-div'>" +
+                    "<div class='row-fluid subject-div'>" + element.Subject + "</div>" +
+                    "<div class='row-fluid body-div'>" + element.Body + "</div>" +
+                    "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
+                    "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
+                    "<input id='e" + element.Id + "' class='expand-button' value='expand' type='button' />" + 
+                    "<input id='r" + element.Id + "' class='reply-button' value='reply' type='button' />" +
+                "</div><br>");
+            });
+
+            $(".expand-button").click(function() {
+              var formdata = {};
+              formdata.token = readCookie('token'),
+              formdata.threadId = $(this).attr('id').substring(1); 
+              var repliesDiv = '#replies-' + $(this).attr('id').substring(1);
+              $.ajax( 
+                {
+                  method: "POST",
+                  url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-replies",
+                  dataType: "json",
+                  data: JSON.stringify(formdata),
+                  crossdomain: true,
+                  async:true, 
+                  success: function(data) {
+                    data.sort(compareTimes);
+                    data.forEach(function(element){
+                      $(repliesDiv).append(
+                        "<div class='row-fluid reply-div'>" +
+                            "<div class='row-fluid body-div'>" + element.Body + "</div>" +
+                            "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
+                        "</div><br>");
+                    } );
+                  },
+                  error: function(data) {
+                    console.log("ERROR " + JSON.stringify(data));
+                  }
+
+                }
+              );
+            });
+
+            $(".reply-button").click(function() {
+              console.log('click');
+              var formdata = {};
+              formdata.token = readCookie('token');
+              formdata.threadId = $(this).attr('id').substring(1);
+              formdata.body = $("#thread-body-input").val();
+
+              $.ajax( 
+                {
+                  method: "POST",
+                  url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/post-reply",
+                  dataType: "json",
+                  data: JSON.stringify(formdata),
+                  crossdomain: true,
+                  async:true, 
+                  success: function(data) {
+                    console.log("SUCCESS " + JSON.stringify(data) + "\n");
+                    window.location.hash = "#home.html";
+                    $(window).hashchange();
+                  },
+                  error: function(data) {
+                    console.log("ERROR " + JSON.stringify(data));
+                  }
+
+                }
+              );
+          });
+
+
             
           },
           error: function(data) {
@@ -84,8 +148,7 @@ function onLoadHome() {
     });
 
     /**/
-
-    $("#thread-submit").click(function() {
+    bindOnce($("#thread-submit"), function() {
       var formdata = {};
 
       formdata.token = readCookie('token');
@@ -115,6 +178,10 @@ function onLoadHome() {
 
       
   });
+
+  
+
+
 };
 
 function onLoadPeople() {

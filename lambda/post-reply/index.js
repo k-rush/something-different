@@ -61,6 +61,7 @@ exports.handler = (event, context, callback) => {
 
 function validateFields(event, configuration, username, callback) {
     var body = JSON.parse(event.body);
+    console.log(body.threadId + "  " + username + " " + body.body);
     if (isString(body.threadId) && isString(username) && isString(body.body)) {
             //Check if thread ID matches thread in DB...
         var queryParams = {
