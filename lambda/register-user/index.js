@@ -131,11 +131,12 @@ function isString(data) {
 function setConfiguration(event, callback) {
 
     var configuration = {};
-    
+    configuration['email-subject'] = 'Validate your email with the Something Different home group website!';
     if(event.resource.substring(1,5) == 'beta') {
         configuration['stage'] = 'beta';
         configuration['user-table'] = 'SD-user-beta';
         configuration['API'] = 'https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/';
+        
 
 
         var keyQueryParams = {
