@@ -185,34 +185,36 @@ function onLoadHome() {
 };
 
 function onLoadPeople() {
-  validateAndRun(function(loginData) {
-    var tokendata = {'token': readCookie('token')}; 
-    $.ajax( 
-        {
-          method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-users",
-          dataType: "json",
-          data: JSON.stringify(tokendata),
-          crossdomain: true,
-          async:true, 
-          success: function(data) {
-            //Success callback of API call
-            
-            console.log("SUCCESS " + JSON.stringify(data) + "\n");
-            data.forEach(function(element){
-              $("#people-content").append("Username: " + element.username + "  Name: " + element.firstname + " " + element.lastname + "  email: " + element.email + " verified? " + element.verified + "<br>");
-            } );
-            
-          },
-          error: function(data) {
-            //Error callback of API call
-            console.log("ERROR " + JSON.stringify(data));
+  var tokendata = {'token': readCookie('token')}; 
+  $.ajax( 
+      {
+        method: "POST",
+        url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-users",
+        dataType: "json",
+        data: JSON.stringify(tokendata),
+        crossdomain: true,
+        async:true, 
+        statusCode : {
+          403 : function() {
             window.location.hash = "#login.html";
-
           }
+        },
+        success: function(data, textStatus, xhr) {
+          //Success callback of API call
+          
+          console.log("SUCCESS " + JSON.stringify(data) + "\n");
+          data.forEach(function(element){
+            $("#people-content").append("Username: " + element.username + "  Name: " + element.firstname + " " + element.lastname + "  email: " + element.email + " verified? " + element.verified + "<br>");
+          } );
+          
+        },
+        error: function(xhr, textStatus, err) {
+          //Error callback of API call
+          console.log("ERROR " + JSON.stringify(xhr));
+          if(xhr.status == 403) window.location.hash = "#login.html";
 
         }
-      );
+
   });
 }
 
