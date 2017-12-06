@@ -3,6 +3,7 @@ var crypto = require('crypto');
 var AWS = require('aws-sdk');
 var waterfall = require('async-waterfall');
 var async = require('async');
+var validator = require('validator');
 const uuidv1 = require('uuid/v1');
 AWS.config.update({region: 'us-west-2'});
 
@@ -45,7 +46,7 @@ exports.handler = (event, context, callback) => {
                 queryUserDB,
 
                 validateFields,
-                sanitizeInputs,
+                sanitizeFields,
                 putReply
                 ],
                 done);
@@ -59,8 +60,7 @@ exports.handler = (event, context, callback) => {
 };
 
 
-function validateFields(event, configuration, username, callback) {
-    var body = JSON.parse(event.body);
+function validateFields(body, configuration, username, callback) {
     console.log(body.threadId + "  " + username + " " + body.body);
     if (isString(body.threadId) && isString(username) && isString(body.body)) {
             //Check if thread ID matches thread in DB...
@@ -88,7 +88,7 @@ function validateFields(event, configuration, username, callback) {
 
                 }
                 else {
-                    callback(null, event, configuration, username);
+                    callback(null, body, configuration, username);
                 }
             }
         });
@@ -106,6 +106,11 @@ function isString(data) {
 //Sets configuration based on dev stage
 function setConfiguration(event, callback) {
 
+    var body = {};
+    try { 
+        body = JSON.parse(event.body);
+    } catch (err) { done({message:"Could not process event body"},null); }
+    
     var configuration = {};
     
     if(event.resource.substring(1,5) == 'beta') {
@@ -136,7 +141,7 @@ function setConfiguration(event, callback) {
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
-                                callback(null, event, configuration)
+                                callback(null, body, configuration)
                             }
                     });
                 }
@@ -170,7 +175,7 @@ function setConfiguration(event, callback) {
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
-                                callback(null, event, configuration);
+                                callback(null, body, configuration);
                             }
                     });
                 }
@@ -213,13 +218,13 @@ function queryUserDB(event, configuration, token, callback) {
 }
 
 //TODO ... Check to see if token expiration time has exceeded the current time
-function checkExpTime(event, configuration, token, callback) {
+function checkExpTime(body, configuration, token, callback) {
     var timeString = new Date().getTime().toString();
-    callback(null, event, configuration, token);
+    callback(null, body, configuration, token);
 }
 
-function decipherToken(event, configuration, callback) {
-    const token = JSON.parse(event.body).token;
+function decipherToken(body, configuration, callback) {
+    const token = body.token;
     if(typeof token !== "string") callback({message:"Could not decipher token.", code:'403'});
     console.log("Token: " + token);
     var decipheredToken = "";
@@ -231,21 +236,23 @@ function decipherToken(event, configuration, callback) {
         decipheredToken += decipher.final('utf8');
         username = JSON.parse(decipheredToken).username; // Check for valid JSON
         console.log('DECIPHERED TOKEN:' + decipheredToken);
-        callback(null, event, configuration, JSON.parse(decipheredToken));
+        callback(null, body, configuration, JSON.parse(decipheredToken));
     } catch(err) {
         callback({code: '403', message: "Could not decipher auth token"});
     }
     
 }
 
-//TODO Sanitize inputs
-function sanitizeInputs(event, configuration, username, callback) {
-    callback(null, event, configuration, username);
+
+/** Sanitize inputs for html */
+function sanitizeFields(body, configuration, username, callback) {
+    username = validator.escape(username);
+    body.body = validator.escape(body.body);
+    callback(null, body, configuration, username);
 }
 
-function putReply(event, configuration, username, callback) {
+function putReply(body, configuration, username, callback) {
     var timeString = new Date().getTime().toString();
-    var body = JSON.parse(event.body);
     var uuid = uuidv1();
     var params = {
         TableName : configuration['reply-table'],

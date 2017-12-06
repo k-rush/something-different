@@ -3,6 +3,7 @@ var crypto = require('crypto');
 var async = require('async');
 var waterfall = require('async-waterfall');
 var AWS = require('aws-sdk');
+var validator = require('validator');
 AWS.config.update({region: 'us-west-2'});
 
 const doc = require('dynamodb-doc');
@@ -44,6 +45,7 @@ exports.handler = (event, context, callback) => {
             waterfall([
                 async.apply(setConfiguration, event),
                 validateFields,
+                sanitizeFields,
                 queryUserDB,
                 saltAndHashPW,
                 putNewUser,
@@ -62,20 +64,18 @@ exports.handler = (event, context, callback) => {
 /** Generates a verificaiton URL to be sent in a verification email.
  *  form: http://<API ENDPOINT>?token=<VERIFICAITON TOKEN>
  */
-function generateVerificationURL(event, configuration, callback) {
-    var body = JSON.parse(event.body);
+function generateVerificationURL(body, configuration, callback) {
     var exptime = new Date(new Date().setFullYear(new Date().getFullYear() + 1)); //Set expiration time to current year + 1
     var cipher = crypto.createCipher('aes192',configuration['key']); 
 
     var token = cipher.update(JSON.stringify({"username":body.username,"expiration":exptime}), 'utf8', 'hex');
     token += cipher.final('hex');
     var emailBody = configuration['API'] + "verify-email?token=" + token;
-    callback(null, event, configuration, emailBody);
+    callback(null, body, configuration, emailBody);
 }
 
-function sendVerificationEmail(event, configuration, emailBody, callback) {
+function sendVerificationEmail(body, configuration, emailBody, callback) {
     var SES = new AWS.SES({apiVersion: '2010-12-01'});
-    var body = JSON.parse(event.body);
     SES.sendEmail( { 
        Source: configuration['sender-email'],
        Destination: { ToAddresses: [body.email] },
@@ -104,11 +104,19 @@ function sendVerificationEmail(event, configuration, emailBody, callback) {
 } 
 
 /** Validates all of the user registration fields */
-function validateFields(event, configuration, callback) {
-    var body = JSON.parse(event.body);
-    if(isString(body.username) && isString(body.firstname) && isString(body.lastname) && validateEmail(body.email) && validatePassword(body.password))
-        callback(null, event, configuration);
+function validateFields(body, configuration, callback) {
+    if(isString(body.username) && isString(body.firstname) && isString(body.lastname) && validator.isEmail(body.email) && validatePassword(body.password))
+        callback(null, body, configuration);
     else callback({message: 'Invalid registration inputs', code:'400'});                         
+}
+
+/** Sanitize inputs for html */
+function sanitizeFields(body, configuration, callback) {
+    body.username = validator.escape(body.username);
+    body.firstname = validator.escape(body.firstname);
+    body.lastname = validator.escape(body.lastname);
+    body.email = validator.normalizeEmail(validator.escape(body.email));
+    callback(null, body, configuration);
 }
 
 /** Validates email address */
@@ -136,7 +144,7 @@ function setConfiguration(event, callback) {
         configuration['stage'] = 'beta';
         configuration['user-table'] = 'SD-user-beta';
         configuration['API'] = 'https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/';
-        
+
 
 
         var keyQueryParams = {
@@ -160,7 +168,7 @@ function setConfiguration(event, callback) {
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
-                                callback(null, event, configuration)
+                                callback(null, JSON.parse(event.body), configuration)
                             }
                     });
                 }
@@ -193,7 +201,7 @@ function setConfiguration(event, callback) {
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
-                                callback(null, event, configuration);
+                                callback(null, JSON.parse(event.body), configuration);
                             }
                     });
                 }
@@ -203,7 +211,7 @@ function setConfiguration(event, callback) {
 
 }
 
-function queryUserDB(event, configuration, callback) {
+function queryUserDB(body, configuration, callback) {
 
     var queryParams = {
         TableName : configuration['user-table'],
@@ -212,7 +220,7 @@ function queryUserDB(event, configuration, callback) {
             "#username": "username"
         },
         ExpressionAttributeValues: {
-            ":user":JSON.parse(event.body).username
+            ":user":body.username
         }
     };
 
@@ -225,7 +233,7 @@ function queryUserDB(event, configuration, callback) {
         else {
             console.log("QUERY RESULT:" + JSON.stringify(data.Items));
             if(data.Items.length === 0) {
-                callback(null, event, configuration);
+                callback(null, body, configuration);
 
             }
             else {
@@ -236,20 +244,18 @@ function queryUserDB(event, configuration, callback) {
 }
 
 //Salt and hash PW.
-function saltAndHashPW(event, configuration, callback) {
-    var body = JSON.parse(event.body);
+function saltAndHashPW(body, configuration, callback) {
     const hash = crypto.createHash('sha256');
     const salt = crypto.randomBytes(16).toString('hex');
     hash.update(body.password + salt);
     const hashedPass = hash.digest('hex');
 
     console.log("USERNAME: " + body.username + "HASHED PASSWORD:" + hashedPass + " SALT: " + salt);
-    callback(null, event, configuration, hashedPass, salt);                      
+    callback(null, body, configuration, hashedPass, salt);                      
 }
 
-function putNewUser(event, configuration, hashedPass, salt, callback) {
+function putNewUser(body, configuration, hashedPass, salt, callback) {
     //Params used to put new user into database
-    var body = JSON.parse(event.body);
     console.log("Putting user into DB");
     var params = {
         TableName : configuration['user-table'],
@@ -258,7 +264,7 @@ function putNewUser(event, configuration, hashedPass, salt, callback) {
     dynamo.putItem(params, function(err, data) {
         if(!err) {
             console.log("User put into DB\n" + data);
-            callback(null, event, configuration);
+            callback(null, body, configuration);
         }
         else {
             console.log(err + "\n" + data);

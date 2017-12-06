@@ -26,10 +26,6 @@ exports.handler = (event, context, callback) => {
         },
     });
 
-    try { 
-        JSON.parse(event.body).token;
-    } catch (err) { done({message:"Could not process event body"},null); }
-
     switch (event.httpMethod) {
         case 'POST':
 
@@ -56,9 +52,7 @@ exports.handler = (event, context, callback) => {
 
 
 //get discussion threads
-function getReplies(event, configuration, callback) {
-    var body = JSON.parse(event.body);
-
+function getReplies(body, configuration, callback) {
     var queryParams = {
         TableName : configuration['reply-table'],
         IndexName : configuration['reply-table-index'],
@@ -84,7 +78,11 @@ function getReplies(event, configuration, callback) {
 
 //Sets configuration based on dev stage
 function setConfiguration(event, callback) {
-
+    var body = {};
+    try { 
+        body = JSON.parse(event.body);
+    } catch (err) { done({message:"Could not process event body"},null); }
+    
     var configuration = {};
     console.log(event.resource.substring(1,5));
     if(event.resource.substring(1,5) == 'beta') {
@@ -116,7 +114,7 @@ function setConfiguration(event, callback) {
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
-                                callback(null, event, configuration)
+                                callback(null, body, configuration)
                             }
                     });
                 }
@@ -151,7 +149,7 @@ function setConfiguration(event, callback) {
                             }
                             else {
                                 configuration['sender-email'] = data.Items[0].email;
-                                callback(null, event, configuration);
+                                callback(null, body, configuration);
                             }
                     });
                 }
@@ -162,7 +160,7 @@ function setConfiguration(event, callback) {
 }
 
 
-function queryUserDB(event, configuration, token, callback) {
+function queryUserDB(body, configuration, token, callback) {
     console.log("queryUserDB() token:" + token.username);
     var queryParams = {
         TableName : configuration['user-table'],
@@ -188,19 +186,19 @@ function queryUserDB(event, configuration, token, callback) {
 
             }
             else {
-                callback(null,event, configuration);
+                callback(null,body, configuration);
             }
         }
     });
 }
 
 //TODO ... Check to see if token expiration time has exceeded the current time
-function checkExpTime(event, configuration, token, callback) {
-    callback(null, event, configuration, token);
+function checkExpTime(body, configuration, token, callback) {
+    callback(null, body, configuration, token);
 }
 
-function decipherToken(event, configuration, callback) {
-    const token = JSON.parse(event.body).token;
+function decipherToken(body, configuration, callback) {
+    var token = body.token;
     if(typeof token !== "string") callback({message:"Could not decipher token.", code:'403'});
     console.log("Token: " + token);
     var decipheredToken = "";
@@ -212,7 +210,7 @@ function decipherToken(event, configuration, callback) {
         decipheredToken += decipher.final('utf8');
         username = JSON.parse(decipheredToken).username; // Check for valid JSON
         console.log('DECIPHERED TOKEN:' + decipheredToken);
-        callback(null, event, configuration, JSON.parse(decipheredToken));
+        callback(null, body, configuration, JSON.parse(decipheredToken));
     } catch(err) {
         callback({code: '403', message: "Could not decipher token"});
     }
