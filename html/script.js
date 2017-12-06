@@ -46,137 +46,137 @@ function bindOnce(button, callback) {
 }
 
 function onLoadHome() {
-    validateAndRun(function(data) {
-      //$("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
-      var tokendata = {'token': readCookie('token')};
-      $.ajax( 
-        {
-          method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-threads",
-          dataType: "json",
-          data: JSON.stringify(tokendata),
-          crossdomain: true,
-          async:true, 
-          success: function(data) {
-            //Success callback of API call
-            
-            console.log("SUCCESS " + JSON.stringify(data) + "\n");
-            data.sort(compareTimes);
-            data.forEach(function(element){
-              $("#threads").append(
-                "<div class='row-fluid thread-div'>" +
-                    "<div class='row-fluid subject-div'>" + element.Subject + "</div>" +
-                    "<div class='row-fluid body-div'>" + element.Body + "</div>" +
-                    "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
-                    "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
-                    "<input id='e" + element.Id + "' class='expand-button' value='expand' type='button' />" + 
-                    "<input id='r" + element.Id + "' class='reply-button' value='reply' type='button' />" +
-                "</div><br>");
-            });
+    //$("#home-content").append("Welcome " + data.firstname + "!<br>Username: " + data.username + "<br>" + data.email + "<br>Email verified? " + data.verified + "<br>");
+  var tokendata = {'token': readCookie('token')};
+  $.ajax( 
+  {
+    method: "POST",
+    url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-threads",
+    dataType: "json",
+    data: JSON.stringify(tokendata),
+    crossdomain: true,
+    async:true, 
+    success: function(data, textStatus, xhr) {
+      //Success callback of API call
+      
+      console.log("SUCCESS " + JSON.stringify(data) + "\n");
+      data.sort(compareTimes);
+      data.forEach(function(element){
+        $("#threads").append(
+          "<div class='row-fluid thread-div'>" +
+              "<div class='row-fluid subject-div'>" + element.Subject + "</div>" +
+              "<div class='row-fluid body-div'>" + element.Body + "</div>" +
+              "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
+              "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
+              "<input id='e" + element.Id + "' class='expand-button' value='expand' type='button' />" + 
+              "<input id='r" + element.Id + "' class='reply-button' value='reply' type='button' />" +
+          "</div><br>");
+      });
 
-            $(".expand-button").click(function() {
-              var formdata = {};
-              formdata.token = readCookie('token'),
-              formdata.threadId = $(this).attr('id').substring(1); 
-              var repliesDiv = '#replies-' + $(this).attr('id').substring(1);
-              $.ajax( 
-                {
-                  method: "POST",
-                  url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-replies",
-                  dataType: "json",
-                  data: JSON.stringify(formdata),
-                  crossdomain: true,
-                  async:true, 
-                  success: function(data) {
-                    data.sort(compareTimes);
-                    data.forEach(function(element){
-                      $(repliesDiv).append(
-                        "<div class='row-fluid reply-div'>" +
-                            "<div class='row-fluid body-div'>" + element.Body + "</div>" +
-                            "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
-                        "</div><br>");
-                    } );
-                  },
-                  error: function(data) {
-                    console.log("ERROR " + JSON.stringify(data));
-                  }
-
-                }
-              );
-            });
-
-            $(".reply-button").click(function() {
-              console.log('click');
-              var formdata = {};
-              formdata.token = readCookie('token');
-              formdata.threadId = $(this).attr('id').substring(1);
-              formdata.body = $("#thread-body-input").val();
-
-              $.ajax( 
-                {
-                  method: "POST",
-                  url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/post-reply",
-                  dataType: "json",
-                  data: JSON.stringify(formdata),
-                  crossdomain: true,
-                  async:true, 
-                  success: function(data) {
-                    console.log("SUCCESS " + JSON.stringify(data) + "\n");
-                    window.location.hash = "#home.html";
-                    $(window).hashchange();
-                  },
-                  error: function(data) {
-                    console.log("ERROR " + JSON.stringify(data));
-                  }
-
-                }
-              );
-          });
-
-
-            
-          },
-          error: function(data) {
-            //Error callback of API call
-            console.log("ERROR " + JSON.stringify(data));
-            window.location.hash = "#login.html";
+      $(".expand-button").click(function() {
+        var formdata = {};
+        formdata.token = readCookie('token'),
+        formdata.threadId = $(this).attr('id').substring(1); 
+        var repliesDiv = '#replies-' + $(this).attr('id').substring(1);
+        $.ajax( 
+          {
+            method: "POST",
+            url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/get-replies",
+            dataType: "json",
+            data: JSON.stringify(formdata),
+            crossdomain: true,
+            async:true, 
+            success: function(data, textStatus, xhr) {
+              data.sort(compareTimes);
+              data.forEach(function(element){
+                $(repliesDiv).append(
+                  "<div class='row-fluid reply-div'>" +
+                      "<div class='row-fluid body-div'>" + element.Body + "</div>" +
+                      "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
+                  "</div><br>");
+              } );
+            },
+            error: function(xhr, textStatus, err) {
+              console.log("ERROR " + JSON.stringify(xhr));
+              if(xhr.status == 403) window.location.hash = "#login.html";
+            }
 
           }
+        );
+      });
 
-        }
-      );
-    });
+      $(".reply-button").click(function() {
+        console.log('click');
+        var formdata = {};
+        formdata.token = readCookie('token');
+        formdata.threadId = $(this).attr('id').substring(1);
+        formdata.body = $("#thread-body-input").val();
 
-    /**/
-    bindOnce($("#thread-submit"), function() {
-      var formdata = {};
+        $.ajax( 
+          {
+            method: "POST",
+            url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/post-reply",
+            dataType: "json",
+            data: JSON.stringify(formdata),
+            crossdomain: true,
+            async:true, 
+            success: function(data, textStatus, xhr) {
+              console.log("SUCCESS " + JSON.stringify(data) + "\n");
+              window.location.hash = "#home.html";
+              $(window).hashchange();
+            },
+            error: function(xhr, textStatus, err) {
+              console.log("ERROR " + JSON.stringify(xhr));
+              if(xhr.status == 403) window.location.hash = "#login.html";
+            }
 
-      formdata.token = readCookie('token');
-
-      formdata.subject = $("#thread-subject-input").val();
-      formdata.body = $("#thread-body-input").val();
-
-      $.ajax( 
-        {
-          method: "POST",
-          url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/post-thread",
-          dataType: "json",
-          data: JSON.stringify(formdata),
-          crossdomain: true,
-          async:true, 
-          success: function(data) {
-            console.log("SUCCESS " + JSON.stringify(data) + "\n");
-            window.location.hash = "#home.html";
-            $(window).hashchange();
-          },
-          error: function(data) {
-            console.log("ERROR " + JSON.stringify(data));
           }
+        );
+      });
 
-        }
-      );
 
       
+    },
+    error: function(xhr, textStatus, err) {
+      //Error callback of API call
+      console.log("STATUS " + xhr.status + "ERROR " + JSON.stringify(xhr));
+      if(xhr.status == 403) window.location.hash = "#login.html";
+
+    }
+
+  });
+
+  
+  bindOnce($("#thread-submit"), function() {
+    var formdata = {};
+
+    formdata.token = readCookie('token');
+
+    formdata.subject = $("#thread-subject-input").val();
+    formdata.body = $("#thread-body-input").val();
+
+    $.ajax( 
+      {
+        method: "POST",
+        url: "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/post-thread",
+        dataType: "json",
+        data: JSON.stringify(formdata),
+        crossdomain: true,
+        async:true, 
+        success: function(data, textStatus, xhr) {
+          console.log("SUCCESS " + JSON.stringify(data) + "\n");
+          window.location.hash = "#home.html";
+          $(window).hashchange();
+        },
+        error: function(xhr, textStatus, err) {
+          console.log("ERROR " + JSON.stringify(data));
+          if(xhr.status == 403) window.location.hash = "#login.html";
+        }
+
+      }
+    );
+
+    
   });
 
   
