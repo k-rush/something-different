@@ -159,6 +159,7 @@ function onLoadHome() {
 
   
   bindOnce($("#thread-submit"), function() {
+    $(this).attr('disabled','true');    
     var formdata = {};
 
     formdata.token = readCookie('token');
