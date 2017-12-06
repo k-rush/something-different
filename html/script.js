@@ -71,17 +71,19 @@ function onLoadHome() {
               "<div class='row-fluid body-div'>" + element.Body + "</div>" +
               "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
               "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
-              "<input id='e" + element.Id + "' class='expand-button' value='expand' type='button' /><br>" + 
-              "<input id='b" + element.Id + "' class='expand-button' type='textarea' /><br>" +
+              "<input id='expand-" + element.Id + "' class='expand-button' value='expand' type='button' /><br>" + 
+              "<input id='retract-" + element.Id + "' class='retract-button' value='retract' type='button' /><br>" + 
+              "<input id='b" + element.Id + "' class='reply-body' type='textarea' /><br>" +
               "<input id='r" + element.Id + "' class='reply-button' value='reply' type='button' />" +
           "</div><br>");
       });
 
-      $(".expand-button").click(function() {
+      bindOnce($(".expand-button"), function() {
         var formdata = {};
         formdata.token = readCookie('token'),
-        formdata.threadId = $(this).attr('id').substring(1); 
-        var repliesDiv = '#replies-' + $(this).attr('id').substring(1);
+        formdata.threadId = $(this).attr('id').substring(7); 
+        var repliesDiv = '#replies-' + $(this).attr('id').substring(7);
+        
         $.ajax( 
           {
             method: "POST",
@@ -91,6 +93,7 @@ function onLoadHome() {
             crossdomain: true,
             async:true, 
             success: function(data, textStatus, xhr) {
+              
               data.sort(compareTimes);
               data.forEach(function(element){
                 $(repliesDiv).append(
@@ -109,7 +112,12 @@ function onLoadHome() {
         );
       });
 
-      $(".reply-button").click(function() {
+      bindOnce($(".retract-button"), function() {
+        var repliesDiv = '#replies-' + $(this).attr('id').substring(8);
+        $(repliesDiv).empty();
+      });
+
+      bindOnce($(".reply-button"), function() {
         console.log('click');
         var formdata = {};
         formdata.token = readCookie('token');
@@ -223,45 +231,46 @@ function onLoadPeople() {
 }
 
 function onLoadFiles() {
-  
-  $.ajax( 
-      {
-        method: "GET",
-        url: "http://something-different.s3.amazonaws.com",
-        dataType: "json",
-        crossdomain: true,
-        async:true, 
-        statusCode : {
-          403 : function() {
-            window.location.hash = "#login.html";
-          }
-        },
-        success: function(data, textStatus, xhr) {
-          //Success callback of API call
-          console.log("SUCCESS " + JSON.stringify(data) + "\n");
-          var parser = new DOMParser();
-          var response = parser.parseFromString(data,"text/xml");
-          $("#files-content").append(response.getElementsByTagName("Key")[0].childNodes[0].nodeValue);
-
-        },
-        error: function(xhr, textStatus, err) {
-          //Error callback of API call
-          console.log("ERROR " + JSON.stringify(xhr));
-          if(xhr.status == 403) window.location.hash = "#login.html";
-
-          //TODO: why am I getting 200 status and error callback?
-          if(xhr.status == 200) {
-            var parser = new DOMParser();
-            var response = parser.parseFromString(xhr.responseText,"text/xml");
-            var fileKeys = response.getElementsByTagName("Key");
-            for(var i = 0; i < fileKeys.length; i++) {
-              $("#files-content").append('<a href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br>');
+  validateAndRun( function() {
+    $.ajax( 
+        {
+          method: "GET",
+          url: "http://something-different.s3.amazonaws.com",
+          dataType: "json",
+          crossdomain: true,
+          async:true, 
+          statusCode : {
+            403 : function() {
+              window.location.hash = "#login.html";
             }
+          },
+          success: function(data, textStatus, xhr) {
+            //Success callback of API call
+            console.log("SUCCESS " + JSON.stringify(data) + "\n");
+            var parser = new DOMParser();
+            var response = parser.parseFromString(data,"text/xml");
+            $("#files-content").append(response.getElementsByTagName("Key")[0].childNodes[0].nodeValue);
+
+          },
+          error: function(xhr, textStatus, err) {
+            //Error callback of API call
+            console.log("ERROR " + JSON.stringify(xhr));
+            if(xhr.status == 403) window.location.hash = "#login.html";
+
+            //TODO: why am I getting 200 status and error callback?
+            if(xhr.status == 200) {
+              var parser = new DOMParser();
+              var response = parser.parseFromString(xhr.responseText,"text/xml");
+              var fileKeys = response.getElementsByTagName("Key");
+              for(var i = 0; i < fileKeys.length; i++) {
+                $("#files-content").append('<a href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br>');
+              }
+            }
+
           }
 
-        }
-
-  });
+    });
+  })
 }
 
 //Validates login token and runs callback function.
