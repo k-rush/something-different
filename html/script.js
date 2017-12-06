@@ -82,34 +82,8 @@ function onLoadHome() {
         var formdata = {};
         formdata.token = readCookie('token'),
         formdata.threadId = $(this).attr('id').substring(7); 
-        var repliesDiv = '#replies-' + $(this).attr('id').substring(7);
-        
-        $.ajax( 
-          {
-            method: "POST",
-            url: API + "get-replies",
-            dataType: "json",
-            data: JSON.stringify(formdata),
-            crossdomain: true,
-            async:true, 
-            success: function(data, textStatus, xhr) {
-              
-              data.sort(compareTimes);
-              data.forEach(function(element){
-                $(repliesDiv).append(
-                  "<div class='row-fluid reply-div'>" +
-                      "<div class='row-fluid body-div'>" + element.Body + "</div>" +
-                      "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
-                  "</div><br>");
-              } );
-            },
-            error: function(xhr, textStatus, err) {
-              console.log("ERROR " + JSON.stringify(xhr));
-              if(xhr.status == 403) window.location.hash = "#login.html";
-            }
-
-          }
-        );
+        var repliesDiv = $('#replies-' + $(this).attr('id').substring(7));
+        getReplies(formdata, repliesDiv);
       });
 
       bindOnce($(".retract-button"), function() {
@@ -119,10 +93,15 @@ function onLoadHome() {
 
       bindOnce($(".reply-button"), function() {
         console.log('click');
+
+        var repliesDiv = $('#replies-' + $(this).attr('id').substring(1));
+
         var formdata = {};
         formdata.token = readCookie('token');
         formdata.threadId = $(this).attr('id').substring(1);
         formdata.body = $("#b" + $(this).attr('id').substring(1)).val();
+        
+
 
         $.ajax( 
           {
@@ -134,8 +113,8 @@ function onLoadHome() {
             async:true, 
             success: function(data, textStatus, xhr) {
               console.log("SUCCESS " + JSON.stringify(data) + "\n");
-              window.location.hash = "#home.html";
-              $(window).hashchange();
+              
+              getReplies(formdata, repliesDiv);
             },
             error: function(xhr, textStatus, err) {
               console.log("ERROR " + JSON.stringify(xhr));
@@ -190,11 +169,37 @@ function onLoadHome() {
 
     
   });
-
-  
-
-
 };
+
+function getReplies(formdata, repliesDiv) {
+
+  $.ajax( 
+    {
+      method: "POST",
+      url: API + "get-replies",
+      dataType: "json",
+      data: JSON.stringify(formdata),
+      crossdomain: true,
+      async:true, 
+      success: function(data, textStatus, xhr) {
+        repliesDiv.empty();
+        data.sort(compareTimesAsc);
+        data.forEach(function(element){
+          repliesDiv.append(
+            "<div class='row-fluid reply-div'>" +
+                "<div class='row-fluid body-div'>" + element.Body + "</div>" +
+                "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
+            "</div><br>");
+        } );
+      },
+      error: function(xhr, textStatus, err) {
+        console.log("ERROR " + JSON.stringify(xhr));
+        if(xhr.status == 403) window.location.hash = "#login.html";
+      }
+
+    }
+  );
+}
 
 function onLoadPeople() {
   var tokendata = {'token': readCookie('token')}; 
@@ -532,6 +537,15 @@ function compareTimes(a,b) {
   if (a.Time > b.Time)
     return -1;
   if (a.Time < b.Time)
+    return 1;
+  return 0;
+}
+
+//Used for sorting function for replies.  Compares two time values (oldest first)
+function compareTimesAsc(a,b) {
+  if (a.Time < b.Time)
+    return -1;
+  if (a.Time > b.Time)
     return 1;
   return 0;
 }
