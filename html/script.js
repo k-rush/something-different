@@ -67,16 +67,16 @@ function onLoadHome() {
       data.forEach(function(element){
         $("#threads").append(
           "<div class='row-fluid thread-div' id='t" + element.Id + "'>" +
-              "<div class='row-fluid subject-div'>" + element.Subject + "</div>" +
-              "<div class='row-fluid body-div'>" + element.Body + "</div>" +
-              "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
+              "<div class='row-fluid subject-div'><h3>" + element.Subject + "</h3></div>" +
+              "<div class='row-fluid body-div'><p>" + element.Body + "</p></div>" +
+              "<div class='row-fluid postedBy-div'> - " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)).toLocaleString() + "</div>" +
               "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
-              "<input id='expand-" + element.Id + "' class='expand-button' value='expand' type='button' /><br>" + 
-              "<input id='retract-" + element.Id + "' class='retract-button' value='retract' type='button' /><br>" + 
-              "<input id='b" + element.Id + "' class='reply-body' type='textarea' /><br>" +
-              "<input id='r" + element.Id + "' class='reply-button' value='reply' type='button' />" +
+              "<input id='expand-" + element.Id + "' class='expand-button' value='Show Replies' type='button' /><br>" + 
+              "<input id='retract-" + element.Id + "' class='retract-button' value='Hide Replies' type='button' /><br>" + 
           "</div><br>");
       });
+
+      $('.retract-button').hide();
 
       bindOnce($(".expand-button"), function() {
         var formdata = {};
@@ -84,6 +84,7 @@ function onLoadHome() {
         formdata.threadId = $(this).attr('id').substring(7); 
         var repliesDiv = $('#replies-' + $(this).attr('id').substring(7));
         getReplies(formdata, repliesDiv);
+        
       });
 
       /*
@@ -106,43 +107,11 @@ function onLoadHome() {
       */
 
       bindOnce($(".retract-button"), function() {
-        var repliesDiv = '#replies-' + $(this).attr('id').substring(8);
-        $(repliesDiv).empty();
+        var repliesDiv = $('#replies-' + $(this).attr('id').substring(8));
+        repliesDiv.empty();
         repliesDiv.removeClass('expanded');
-      });
-
-      bindOnce($(".reply-button"), function() {
-        console.log('click');
-
-        var repliesDiv = $('#replies-' + $(this).attr('id').substring(1));
-
-        var formdata = {};
-        formdata.token = readCookie('token');
-        formdata.threadId = $(this).attr('id').substring(1);
-        formdata.body = $("#b" + $(this).attr('id').substring(1)).val();
-        
-
-
-        $.ajax( 
-          {
-            method: "POST",
-            url: API + "post-reply",
-            dataType: "json",
-            data: JSON.stringify(formdata),
-            crossdomain: true,
-            async:true, 
-            success: function(data, textStatus, xhr) {
-              console.log("SUCCESS " + JSON.stringify(data) + "\n");
-              
-              getReplies(formdata, repliesDiv);
-            },
-            error: function(xhr, textStatus, err) {
-              console.log("ERROR " + JSON.stringify(xhr));
-              if(xhr.status == 403) window.location.hash = "#login.html";
-            }
-
-          }
-        );
+        $(this).hide();
+        $("#expand-" + $(this).attr('id').substring(8)).show();
       });
 
 
@@ -207,12 +176,49 @@ function getReplies(formdata, repliesDiv) {
         data.sort(compareTimesAsc);
         data.forEach(function(element){
           repliesDiv.append(
-            "<div class='row-fluid reply-div'>" +
-                "<div class='row-fluid body-div'>" + element.Body + "</div>" +
-                "<div class='row-fluid posteby-div'>Posted by: " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)) + "</div>" +
+            "<div class='row-fluid'>" +
+                "<div class='row-fluid body-div'><p>" + element.Body + "</p></div>" +
+                "<div class='row-fluid postedBy-div'> - " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)).toLocaleString() + "</div>" +
             "</div><br>");
         } );
+        repliesDiv.append("<input id='b" + formdata.threadId + "' class='reply-body' type='textarea' /><br>" +
+              "<input id='r" + formdata.threadId + "' class='reply-button' value='reply' type='button' /></div>");
         repliesDiv.addClass('expanded');
+        $("#expand-" + formdata.threadId).hide();
+        $("#retract-" + formdata.threadId).show();
+        bindOnce($("#r" + formdata.threadId), function() {
+          console.log('click');
+
+          var repliesDiv = $('#replies-' + $(this).attr('id').substring(1));
+
+          var formdata = {};
+          formdata.token = readCookie('token');
+          formdata.threadId = $(this).attr('id').substring(1);
+          formdata.body = $("#b" + $(this).attr('id').substring(1)).val();
+          
+
+
+          $.ajax( 
+            {
+              method: "POST",
+              url: API + "post-reply",
+              dataType: "json",
+              data: JSON.stringify(formdata),
+              crossdomain: true,
+              async:true, 
+              success: function(data, textStatus, xhr) {
+                console.log("SUCCESS " + JSON.stringify(data) + "\n");
+                
+                getReplies(formdata, repliesDiv);
+              },
+              error: function(xhr, textStatus, err) {
+                console.log("ERROR " + JSON.stringify(xhr));
+                if(xhr.status == 403) window.location.hash = "#login.html";
+              }
+
+            }
+          );
+        });
       },
       error: function(xhr, textStatus, err) {
         console.log("ERROR " + JSON.stringify(xhr));

@@ -144,10 +144,18 @@
 }
 
 .subject-div {
-  border-bottom:1px solid black;
+  /*border-bottom:1px solid black;*/
 }
 .body-div {
+  /*border-bottom:1px solid black;*/
+}
+
+.postedBy-div {
   border-bottom:1px solid black;
+}
+
+.replies-div {
+  padding-left:5%;
 }
 
 
