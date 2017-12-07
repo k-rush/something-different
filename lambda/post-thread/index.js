@@ -67,7 +67,7 @@ function validateFields(body, configuration, username, callback) {
 
 /** Tests typeof data is string */
 function isString(data) {
-    return (typeof data === 'string');
+    return (typeof data === 'string' && 0 !== data.length);
 }
 
 
@@ -172,14 +172,12 @@ function queryUserDB(body, configuration, token, callback) {
         }
 
         else {
-            console.log("QUERY RESULT:" + JSON.stringify(data.Items));
+            console.log("USER DB QUERY RESULT:" + JSON.stringify(data.Items));
             if(data.Items.length === 0) {
                 callback({code: '403', message: "Incorrect username"});
-
             }
             else {
                 console.log("Succesful query." + callback);
-
                 callback(null,body, configuration, data.Items[0].username);
             }
         }
