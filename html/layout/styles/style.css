@@ -3,7 +3,7 @@
 @import url("nav.css");
 
 .body {
-	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+	font-family: "Calibre", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
    	font-weight: 300;
    }
 
@@ -61,7 +61,7 @@
 }
 
 #header h1, h2, h3, h4 {
-	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+	font-family: "Calibre", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
 }
 
 #header h1 {
@@ -91,6 +91,24 @@
    	font-size: 12pt;
    	color:#3B5998;
    	font-weight: normal;
+}
+
+input[type="button"],
+button {
+    background: none;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    color: inherit;
+    /* cursor: default; */
+    font: inherit;
+    line-height: normal;
+    overflow: visible;
+    padding: 3px;
+    margin-top:2px;
+    -webkit-appearance: button; /* for input */
+    -webkit-user-select: none; /* for button */
+       -moz-user-select: none;
+        -ms-user-select: none;
 }
 
 
@@ -135,13 +153,15 @@
 
 #home h3, h4 {
 	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
-   	font-weight: 100;
+  font-weight: 100;
 	text-align: center;
 }
 
 .thread-div {
-  border:1px solid black;
-  max-width:400px;
+  /*border:1px solid #666;*/
+  border-radius: 10px;
+  max-width:500px;
+  padding:3%;
 }
 
 .subject-div {
@@ -152,7 +172,9 @@
 }
 
 .postedBy-div {
-  border-bottom:1px solid black;
+  border-bottom:1px solid #aaa;
+  font-size:8pt;
+  font-style: italic;
 }
 
 .replies-div {
@@ -161,6 +183,10 @@
 
 .user-div {
   border-bottom:1px solid #999;
+}
+
+#threads {
+  border-bottom: 1px solid #aaa;
 }
 
 
@@ -185,6 +211,10 @@
    	font-weight: 300;
 	font-size: 20px;
 	line-height: 100%
+}
+
+#thread-form {
+  display:none;
 }
 
 /********************** CONTACT ******************************/

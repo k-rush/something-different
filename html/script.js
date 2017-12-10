@@ -69,8 +69,8 @@ function onLoadHome() {
               "<div class='row-fluid body-div'><p>" + element.Body + "</p></div>" +
               "<div class='row-fluid postedBy-div'> - " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)).toLocaleString() + "</div>" +
               "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
-              "<input id='expand-" + element.Id + "' class='expand-button' value='Show Replies' type='button' /><br>" + 
-              "<input id='retract-" + element.Id + "' class='retract-button' value='Hide Replies' type='button' /><br>" + 
+              "<input id='expand-" + element.Id + "' class='expand-button' value='show replies' type='button' /><br>" + 
+              "<input id='retract-" + element.Id + "' class='retract-button' value='hide replies' type='button' /><br>" + 
           "</div><br>");
       });
 
@@ -85,24 +85,7 @@ function onLoadHome() {
         
       });
 
-      /*
-       * Trying out toggling the expansion of threads..
-
-      bindOnce($(".thread-div"), function() {
-        var formdata = {};
-        formdata.token = readCookie('token'),
-        formdata.threadId = $(this).attr('id').substring(1); 
-        var repliesDiv = $('#replies-' + $(this).attr('id').substring(1));
-        if(repliesDiv.hasClass('expanded')) {
-          repliesDiv.empty();
-          repliesDiv.removeClass('expanded');
-        }
-        else { 
-          getReplies(formdata, repliesDiv);
-        }
-      });
-
-      */
+      
 
       bindOnce($(".retract-button"), function() {
         var repliesDiv = $('#replies-' + $(this).attr('id').substring(8));
@@ -110,6 +93,12 @@ function onLoadHome() {
         repliesDiv.removeClass('expanded');
         $(this).hide();
         $("#expand-" + $(this).attr('id').substring(8)).show();
+      });
+
+      $('#show-post').click(function(){
+        if($(this).prop("value") === "show form") $(this).prop("value", "hide form");
+        else $(this).prop("value", "show form")
+          $('#thread-form').slideToggle('slow');
       });
 
 
@@ -186,7 +175,7 @@ function getReplies(formdata, repliesDiv) {
             "</div><br>");
         } );
         repliesDiv.append("<input id='b" + formdata.threadId + "' class='reply-body' type='textarea' /><br>" +
-              "<input id='r" + formdata.threadId + "' class='reply-button' value='reply' type='button' /></div>");
+              "<input id='r" + formdata.threadId + "' class='reply-button' value='post reply' type='button' /></div>");
         repliesDiv.addClass('expanded');
         $("#expand-" + formdata.threadId).hide();
         $("#retract-" + formdata.threadId).show();
