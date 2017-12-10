@@ -22,10 +22,8 @@ $(function() {
         });
 
       });
-      bindOnce($("#logout-button"), function() { 
-              deleteCookie("token");
-              deleteCookie("username");
-          });
+
+      bindOnce($("#logout-button"), logout);
     
       /** boldify nav links */
       $(".update-content").each(function(index) {
@@ -120,7 +118,7 @@ function onLoadHome() {
     error: function(xhr, textStatus, err) {
       //Error callback of API call
       console.log("STATUS " + xhr.status + "ERROR " + JSON.stringify(xhr));
-      if(xhr.status == 403) window.location.hash = "#login.html";
+      if(xhr.status == 403)  logout();
 
     }
 
@@ -128,7 +126,7 @@ function onLoadHome() {
 
   
   bindOnce($("#thread-submit"), function() {
-    $(this).attr('disabled','true');    
+    $(this).attr('disabled',true);    
     var formdata = {};
 
     formdata.token = readCookie('token');
@@ -151,7 +149,7 @@ function onLoadHome() {
         },
         error: function(xhr, textStatus, err) {
           console.log("ERROR " + JSON.stringify(data));
-          if(xhr.status == 403) window.location.hash = "#login.html";
+          if(xhr.status == 403) logout();
         }
 
       }
@@ -160,6 +158,12 @@ function onLoadHome() {
     
   });
 };
+
+function logout() {
+  deleteCookie("token");
+  deleteCookie("username");
+  window.location.hash = "#login.html";
+}
 
 function getReplies(formdata, repliesDiv) {
 
@@ -186,17 +190,24 @@ function getReplies(formdata, repliesDiv) {
         repliesDiv.addClass('expanded');
         $("#expand-" + formdata.threadId).hide();
         $("#retract-" + formdata.threadId).show();
+
+        //Bind click event to reply button.
         bindOnce($("#r" + formdata.threadId), function() {
+          var replyButton = $(this);
+          replyButton.attr('disabled',true).hide();   
+          
+          var threadId = replyButton.attr('id').substring(1);
+          var replyBody = $("#b" + threadId);
+          replyBody.hide();
+
           console.log('click');
 
-          var repliesDiv = $('#replies-' + $(this).attr('id').substring(1));
+          var repliesDiv = $('#replies-' + replyButton.attr('id').substring(1));
 
           var formdata = {};
           formdata.token = readCookie('token');
-          formdata.threadId = $(this).attr('id').substring(1);
-          formdata.body = $("#b" + $(this).attr('id').substring(1)).val();
-          
-
+          formdata.threadId = threadId;
+          formdata.body = $("#b" + threadId).val();
 
           $.ajax( 
             {
@@ -213,7 +224,13 @@ function getReplies(formdata, repliesDiv) {
               },
               error: function(xhr, textStatus, err) {
                 console.log("ERROR " + JSON.stringify(xhr));
-                if(xhr.status == 403) window.location.hash = "#login.html";
+                if(xhr.status == 403) logout();
+                else {
+                  replyBody.show();
+                  replyButton.attr('disabled',false);
+                  replyButton.show(); 
+                }
+
               }
 
             }
@@ -222,7 +239,7 @@ function getReplies(formdata, repliesDiv) {
       },
       error: function(xhr, textStatus, err) {
         console.log("ERROR " + JSON.stringify(xhr));
-        if(xhr.status == 403) window.location.hash = "#login.html";
+        if(xhr.status == 403) logout();
       }
 
     }
@@ -249,14 +266,14 @@ function onLoadPeople() {
           
           console.log("SUCCESS " + JSON.stringify(data) + "\n");
           data.forEach(function(element){
-            $("#people-content").append("Username: " + element.username + "  Name: " + element.firstname + " " + element.lastname + "  email: " + element.email + " verified? " + element.verified + "<br>");
+            $("#people-content").append("<div class='user-div'>" + element.firstname + " " + element.lastname + "<br>Username: " + element.username + "<br>" + element.email + "<br></div>");
           } );
           
         },
         error: function(xhr, textStatus, err) {
           //Error callback of API call
           console.log("ERROR " + JSON.stringify(xhr));
-          if(xhr.status == 403) window.location.hash = "#login.html";
+          if(xhr.status == 403) logout();
 
         }
 
@@ -288,7 +305,7 @@ function onLoadFiles() {
           error: function(xhr, textStatus, err) {
             //Error callback of API call
             console.log("ERROR " + JSON.stringify(xhr));
-            if(xhr.status == 403) window.location.hash = "#login.html";
+            if(xhr.status == 403) logout();
 
             //TODO: why am I getting 200 status and error callback?
             if(xhr.status == 200) {
@@ -330,7 +347,7 @@ function validateAndRun(callback) {
         error: function(data) {
           //Error callback of API call
           console.log("ERROR " + JSON.stringify(data));
-          window.location.hash = "#login.html";
+          logout();
 
         }
 
@@ -367,6 +384,8 @@ function onLoadLogin() {
           },
           error: function(data) {
             console.log("ERROR " + JSON.stringify(data));
+            $("#login-error").html("Login failed, please try again.");
+            logout();
           }
 
         }
