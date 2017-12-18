@@ -215,9 +215,7 @@ button {
   display:none;
 }
 
-/********************** CONTACT ******************************/
-
-
-#contact-content {
-	padding-top: 2%;
+/********************** FILES ******************************/
+.file-link {
+  font-size:18pt;
 }

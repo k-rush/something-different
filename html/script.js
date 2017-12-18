@@ -23,8 +23,18 @@ $(function() {
 
       });
 
-      bindOnce($("#logout-button"), logout);
-    
+
+      bindOnce($("#navLogout"), logout);
+      if(!readCookie("token")) {
+        $(".secure-nav").hide();
+        $("#navLogin").show();
+        $("#navRegister").show();
+      }
+      else {
+        $(".secure-nav").show();
+        $("#navLogin").hide();
+        $("#navRegister").hide();
+      }
       /** boldify nav links */
       $(".update-content").each(function(index) {
         if(this.hash.replace("#","") == url) $(this).css("font-weight","bold");
@@ -96,9 +106,9 @@ function onLoadHome() {
       });
 
       $('#show-post').click(function(){
-        if($(this).prop("value") === "show form") $(this).prop("value", "hide form");
-        else $(this).prop("value", "show form")
-          $('#thread-form').slideToggle('slow');
+        if($(this).prop("value") === "post") $(this).prop("value", "hide");
+        else $(this).prop("value", "post")
+          $('#thread-form').slideToggle();
       });
 
 
@@ -151,6 +161,9 @@ function onLoadHome() {
 function logout() {
   deleteCookie("token");
   deleteCookie("username");
+  $(".secure-nav").hide();
+  $("#navLogin").show();
+  $("#navRegister").show();
   window.location.hash = "#login.html";
 }
 
@@ -302,7 +315,7 @@ function onLoadFiles() {
               var response = parser.parseFromString(xhr.responseText,"text/xml");
               var fileKeys = response.getElementsByTagName("Key");
               for(var i = 0; i < fileKeys.length; i++) {
-                $("#files-content").append('<a href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br>');
+                $("#files-content").append('<a class="file-link" href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br><br>');
               }
             }
 
@@ -365,10 +378,10 @@ function onLoadLogin() {
           crossdomain: true,
           async:true, 
           success: function(data) {
-            $("#debug-div").append("Login Succeeded. TOKEN: " + data.token + "<br>");
-            createCookie('token',data.token,1);
-            createCookie('username',formdata['username'],1);
             console.log("SUCCESS " + JSON.stringify(data) + "\n");
+
+            login(formdata['username'], data.token);
+
             window.location.hash = "#home.html";
           },
           error: function(data) {
@@ -383,6 +396,14 @@ function onLoadLogin() {
       
   });
 };
+
+function login(username, token) {
+  createCookie('token', token, 1);
+  createCookie('username', username, 1);
+  $(".secure-nav").show();
+  $("#navLogin").hide();
+  $("#navRegister").hide();
+}
 
 function onLoadRegister() {
 
