@@ -155,12 +155,12 @@ function queryUserDB(event, configuration, token, callback) {
     console.log("queryUserDB() token:" + token.username);
     var queryParams = {
         TableName : configuration['user-table'],
-        KeyConditionExpression: "#username = :user",
+        KeyConditionExpression: "#s = :user",
         ExpressionAttributeNames:{
-            "#username": "username"
+            "#s": "searchField"
         },
         ExpressionAttributeValues: {
-            ":user":token.username
+            ":user":token.username.toLowerCase()
         }
     };
 

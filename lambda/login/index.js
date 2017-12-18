@@ -130,15 +130,14 @@ function queryUserDB(event, configuration, callback) {
     var body = JSON.parse(event.body);
     var queryParams = {
         TableName : configuration['user-table'],
-        KeyConditionExpression: "#username = :user",
+        KeyConditionExpression: "#s = :user",
         ExpressionAttributeNames:{
-            "#username": "username"
+            "#s": "searchField"
         },
         ExpressionAttributeValues: {
-            ":user":body.username
+            ":user":body.username.toLowerCase()
         }
     };
-
     dynamo.query(queryParams, function(err,data) {
         if(err || data.Items.length === 0) {
             console.log(err);

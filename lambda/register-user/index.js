@@ -112,7 +112,7 @@ function validateFields(body, configuration, callback) {
 
 /** Sanitize inputs for html */
 function sanitizeFields(body, configuration, callback) {
-    body.username = validator.escape(body.username);
+    body.username = validator.escape(validator.trim(body.username));
     body.firstname = validator.escape(body.firstname);
     body.lastname = validator.escape(body.lastname);
     body.email = validator.normalizeEmail(validator.escape(body.email));
@@ -212,15 +212,14 @@ function setConfiguration(event, callback) {
 }
 
 function queryUserDB(body, configuration, callback) {
-
     var queryParams = {
         TableName : configuration['user-table'],
-        KeyConditionExpression: "#username = :user",
+        KeyConditionExpression: "#s = :user",
         ExpressionAttributeNames:{
-            "#username": "username"
+            "#s": "searchField"
         },
         ExpressionAttributeValues: {
-            ":user":body.username
+            ":user":body.username.toLowerCase()
         }
     };
 
@@ -259,7 +258,7 @@ function putNewUser(body, configuration, hashedPass, salt, callback) {
     console.log("Putting user into DB");
     var params = {
         TableName : configuration['user-table'],
-        Item : {"username":body.username, "password":hashedPass, "salt":salt, "email":body.email, "firstname":body.firstname, "lastname":body.lastname, "verified":false}
+        Item : {"username":body.username, "password":hashedPass, "salt":salt, "email":body.email, "firstname":body.firstname, "lastname":body.lastname, "verified":false, "searchField":body.username.toLowerCase()}
     };
     dynamo.putItem(params, function(err, data) {
         if(!err) {
