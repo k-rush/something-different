@@ -315,7 +315,7 @@ function onLoadFiles() {
               var response = parser.parseFromString(xhr.responseText,"text/xml");
               var fileKeys = response.getElementsByTagName("Key");
               for(var i = 0; i < fileKeys.length; i++) {
-                $("#files-content").append('<a class="file-link" href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br><br>');
+                $("#files-content").append('<a class="file-link" target="_blank" href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br><br>');
               }
             }
 
