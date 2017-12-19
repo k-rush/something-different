@@ -17,12 +17,13 @@
 
 }
 
-#header a:link, a:visited {  
+a:link, a:visited {  
 	color:#000;
+  text-decoration: none !important;
 }
-#header a:hover {
-	color:#111;
-	text-decoration: none;
+a:hover {
+	color: #005580;
+	text-decoration: none !important;
 }
 
 #title-span {
@@ -158,10 +159,8 @@ button {
 }
 
 .thread-div {
-  /*border:1px solid #666;*/
   border-radius: 10px;
-  max-width:500px;
-  padding:3%;
+  padding-bottom:3%;
 }
 
 .subject-div {
@@ -196,12 +195,14 @@ button {
 	background: #fff;
 	padding-top:2%;
 	height:100%;
+  margin:0;
 }
 #home-events h1 {
 	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
    	font-weight: 300;
    	font-size:28pt;
 	text-align: center;
+
 }
 
 #home-events h2 {
@@ -215,7 +216,12 @@ button {
   display:none;
 }
 
+#event-form {
+  display:none;
+}
+
+
 /********************** FILES ******************************/
 .file-link {
-  font-size:18pt;
+  font-size:15pt;
 }

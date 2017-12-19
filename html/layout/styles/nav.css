@@ -24,7 +24,7 @@
 	/* for visual troubleshooting  border:1px solid blue */;
 }
 
-#nav li a:link, #nav li a:visited, #nav li a:hover { 
+#nav li a:link, #nav li a:visited { 
 	
 
 	font-size:18px; 
@@ -36,6 +36,9 @@
 	background-color:#fff;
 	display: inline;
 
+}
+#nav li a:hover {
+	color: #005580;
 }
 
 #nav .highlighted {

@@ -79,7 +79,7 @@ function onLoadHome() {
               "<div class='row-fluid body-div'><p>" + element.Body + "</p></div>" +
               "<div class='row-fluid postedBy-div'> - " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)).toLocaleString() + "</div>" +
               "<div class='replies-div' id='replies-" + element.Id + "'></div>" +
-              "<input id='expand-" + element.Id + "' class='expand-button' value='show replies' type='button' /><br>" + 
+              "<input id='expand-" + element.Id + "' class='expand-button' value='replies' type='button' /><br>" + 
               "<input id='retract-" + element.Id + "' class='retract-button' value='hide replies' type='button' /><br>" + 
           "</div><br>");
       });
@@ -188,7 +188,7 @@ function getReplies(formdata, repliesDiv) {
             "</div><br>");
         } );
         repliesDiv.append("<input id='b" + formdata.threadId + "' class='reply-body' type='textarea' /><br>" +
-              "<input id='r" + formdata.threadId + "' class='reply-button' value='post reply' type='button' /></div>");
+              "<input id='r" + formdata.threadId + "' class='reply-button' value='post' type='button' /></div>");
         repliesDiv.addClass('expanded');
         $("#expand-" + formdata.threadId).hide();
         $("#retract-" + formdata.threadId).show();
@@ -315,7 +315,7 @@ function onLoadFiles() {
               var response = parser.parseFromString(xhr.responseText,"text/xml");
               var fileKeys = response.getElementsByTagName("Key");
               for(var i = 0; i < fileKeys.length; i++) {
-                $("#files-content").append('<a class="file-link" target="_blank" href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">' + fileKeys[i].childNodes[0].nodeValue + '<br><br>');
+                $("#files-content").append('<a class="file-link" target="_blank" href="http://something-different.s3.amazonaws.com/' + fileKeys[i].childNodes[0].nodeValue + '">+ ' + fileKeys[i].childNodes[0].nodeValue + '<br><br>');
               }
             }
 
@@ -464,6 +464,7 @@ function onLoadRegister() {
 
 /** called after events page is loaded */
 function onLoadEvents() {
+
   validateAndRun(function(data) {
   /** Full calendarize the full calendar. */
   $('#calendar').fullCalendar({
