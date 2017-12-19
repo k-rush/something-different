@@ -466,6 +466,11 @@ function onLoadRegister() {
 
     }
   });
+  $('#register-form input').keydown(function(e) {
+    if (e.keyCode == 13) {
+        $("#register-form-submit").click();
+    }
+  });
 };
 
 /** called after events page is loaded */
