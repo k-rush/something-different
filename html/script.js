@@ -82,6 +82,7 @@ function onLoadHome() {
               "<input id='expand-" + element.Id + "' class='expand-button' value='replies' type='button' /><br>" + 
               "<input id='retract-" + element.Id + "' class='retract-button' value='hide replies' type='button' /><br>" + 
           "</div><br>");
+
       });
 
       $('.retract-button').hide();
@@ -156,7 +157,15 @@ function onLoadHome() {
 
     
   });
+
+  $("#thread-subject-input,#thread-body-input").keydown(function(e) {
+    if (e.keyCode == 13) {
+        $("#thread-submit").click();
+    }
+  });
 };
+
+
 
 function logout() {
   deleteCookie("token");
@@ -189,6 +198,8 @@ function getReplies(formdata, repliesDiv) {
         } );
         repliesDiv.append("<input id='b" + formdata.threadId + "' class='reply-body' type='textarea' /><br>" +
               "<input id='r" + formdata.threadId + "' class='reply-button' value='post' type='button' /></div>");
+        
+
         repliesDiv.addClass('expanded');
         $("#expand-" + formdata.threadId).hide();
         $("#retract-" + formdata.threadId).show();
@@ -237,6 +248,11 @@ function getReplies(formdata, repliesDiv) {
 
             }
           );
+        });
+        $("#b" + formdata.threadId).keydown(function(e) {
+          if (e.keyCode == 13) {
+              $("#r" + formdata.threadId).click();
+          }
         });
       },
       error: function(xhr, textStatus, err) {
