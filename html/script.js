@@ -395,6 +395,12 @@ function onLoadLogin() {
 
       
   });
+
+  $('#login-form input').keydown(function(e) {
+    if (e.keyCode == 13) {
+        $("#login-form-submit").click();
+    }
+  });
 };
 
 function login(username, token) {
