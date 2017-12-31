@@ -131,7 +131,7 @@ function validatePassword(password) {
 
 /** Tests typeof data is string */
 function isString(data) {
-    return (typeof data === 'string' && 0 !== data.length);;
+    return (typeof data === 'string' && 0 !== data.length);
 }
 
 

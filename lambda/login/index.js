@@ -156,7 +156,7 @@ function checkPassword(event, configuration, user, callback) {
     const hash = crypto.createHash('sha256');
     hash.update(body.password + user.salt);
     if(user.password != hash.digest('hex')) {
-        console.log(err);
+        console.log("Incorrect password");
         callback({message:"Username or password incorrect.", code:"403"},user);
     }
     else {

@@ -59,6 +59,7 @@ function decipherToken(event, configuration, callback) {
         decipheredToken = decipher.update(token, 'hex', 'utf8');
         decipheredToken += decipher.final('utf8');
         username = JSON.parse(decipheredToken).username; // Check for valid JSON
+        console.log(username);
         callback(null, event, configuration, JSON.parse(decipheredToken));
     } catch(err) {
         callback({code: '403', message: "Could not decipher token"});
@@ -70,7 +71,7 @@ function updateUser(event, configuration, token, callback) {
     var params = {
         TableName:configuration['user-table'],
         Key:{
-            "username":token.username
+            "searchField":token.username.toLowerCase()
         },
         UpdateExpression: "set verified = :v",
         ExpressionAttributeValues:{
