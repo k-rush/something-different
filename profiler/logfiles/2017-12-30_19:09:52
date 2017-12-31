@@ -1,0 +1,7 @@
+register-user
+  response codes:
+    Valid inputs, expect 200: 000{"message": "Internal server error"}502
+    Replicate username, expect 400: 000{"message": "Internal server error"}502
+    Invalid date, expect 400: 000{"message": "Internal server error"}502
+
+  Average time to first byte: 

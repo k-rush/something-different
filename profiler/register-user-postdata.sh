@@ -1,5 +1,6 @@
 #!/bin/bash
 INVALID=0
+TESTUSER=0
 # As long as there is at least one more argument, keep looping
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -8,16 +9,22 @@ while [[ $# -gt 0 ]]; do
         -i|--invalid)
         INVALID=1
         ;;
+        -t|--testuser)
+        TESTUSER=1
+        ;;
     esac
     # Shift after checking all the cases to get the next option
     shift
 done
 
 if [ $INVALID -eq 1 ]
-then
-#Invalid input, pass too short
-echo '{"username":"testinvalid","password":"short","email":"kdr213@gmail.com","firstname":"Kyle","lastname":"R"}'
+	then
+	#Invalid input, pass too short
+	echo '{"username":"testinvalid","password":"short","email":"somethingdifferenttest@gmail.com","firstname":"Kyle","lastname":"R"}'
+elif [ $TESTUSER -eq 1 ]
+	then
+	echo '{"username":"testuser","password":"password","email":"somethingdifferenttest@gmail.com","firstname":"Kyle","lastname":"R"}'
 else
-RANDSTRING=`bash ./rand-string.sh`
-echo '{"username":"'$RANDSTRING'","password":"1234567","email":"kdr213@gmail.com","firstname":"Kyle","lastname":"R"}'
+	RANDSTRING=`bash ./rand-string.sh`
+	echo '{"username":"'$RANDSTRING'","password":"1234567","email":"somethingdifferenttest@gmail.com","firstname":"Kyle","lastname":"R"}'
 fi

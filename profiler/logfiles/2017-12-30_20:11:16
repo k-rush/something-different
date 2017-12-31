@@ -1,0 +1,9 @@
+register-user
+  response codes:
+    Valid inputs, expect 200: 200
+    Replicate username, expect 400: 400
+    Test user expect 200 or 400: 400
+    Invalid inputs, expect 400: 400
+
+  Average time to first byte: .841
+    Valid inputs, expect 200: 200
