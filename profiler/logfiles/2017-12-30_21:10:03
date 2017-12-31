@@ -5,15 +5,20 @@ register-user
     Test user, expect 200 or 400: 400
     Invalid inputs, expect 400: 400
 
-  Average time to first byte: 1.867
+  Average time to first byte: 2.219
 
     Valid inputs, expect 200: 200
     Invalid inputs, expect 403: 403
 
-  Average time to first byte: 1.835
+  Average time to first byte: .580
 
     Valid token, expect 200: 200
     Invalid token, expect 403: 403
 
-  Average time to first byte: 2.561
+  Average time to first byte: 1.199
+
+    Valid token, expect 200: 200
+    Invalid token, expect 403: 403
+
+  Average time to first byte: .968
 

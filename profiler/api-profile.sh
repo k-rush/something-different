@@ -80,3 +80,20 @@ do
     SUM=$(bc <<< "$TIME + $SUM")
 done
 echo $'\n  Average time to first byte: '$(bc <<< "scale=3;$SUM/$K")$'\n' | tee -a $LOGFILE
+
+#get-threads
+echo $'get-threads\n  response codes:'
+RESPONSE=`curl -so ./dev/null --write-out "%{http_code}" -d $TOKENDATA -H "Content-Type: application/JSON" $getthreads`
+echo $'    Valid token, expect 200: '$RESPONSE | tee -a $LOGFILE
+RESPONSE=`curl -so ./dev/null --write-out "%{http_code}" -d $DATA -H "Content-Type: application/JSON" $getthreads`
+echo $'    Invalid token, expect 403: '$RESPONSE | tee -a $LOGFILE
+
+#Latency test
+SUM=0
+for (( c=1; c<=$K; c++ ))
+do
+    TIME=`curl -so ./dev/null --write-out "%{time_starttransfer}" -d $TOKENDATA -H "Content-Type: application/JSON" $getthreads`
+    SUM=$(bc <<< "$TIME + $SUM")
+done
+echo $'\n  Average time to first byte: '$(bc <<< "scale=3;$SUM/$K")$'\n' | tee -a $LOGFILE
+

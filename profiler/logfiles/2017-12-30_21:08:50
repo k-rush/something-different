@@ -2,13 +2,23 @@ register-user
   response codes:
     Valid inputs, expect 200: 200
     Replicate username, expect 400: 400
-    Test user expect 200 or 400: 
+    Test user, expect 200 or 400: 400
     Invalid inputs, expect 400: 400
 
-  Average time to first byte: 5.073
+  Average time to first byte: 3.748
+
     Valid inputs, expect 200: 200
     Invalid inputs, expect 403: 403
 
-  Average time to first byte: 1.406
+  Average time to first byte: 1.921
+
     Valid token, expect 200: 200
     Invalid token, expect 403: 403
+
+  Average time to first byte: 1.146
+
+    Valid token, expect 200: 200
+    Invalid token, expect 403: 403
+
+  Average time to first byte: 1.137
+
