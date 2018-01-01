@@ -76,7 +76,7 @@ function setConfiguration(event, callback) {
     var body = {};
     try { 
         body = JSON.parse(event.body);
-    } catch (err) { done({message:"Could not process event body"},null); }
+    } catch (err) { callback({message:"Could not process event body", code:'500'},null); }
     
 
     var configuration = {};
