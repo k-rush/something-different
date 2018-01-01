@@ -220,7 +220,7 @@ function sanitizeFields(body, configuration, username, callback) {
 }
 
 function putThread(body, configuration, username, callback) {
-    var timeString = new Date().getTime().toString();
+    var timeString = new Date().getTime();
     var uuid = uuidv1();
     var params = {
         TableName : configuration['thread-table'],
