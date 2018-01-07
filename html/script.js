@@ -144,7 +144,6 @@ function onLoadHome() {
         async:true, 
         success: function(data, textStatus, xhr) {
           console.log("SUCCESS " + JSON.stringify(data) + "\n");
-          window.location.hash = "#home.html";
           $(window).hashchange();
         },
         error: function(xhr, textStatus, err) {

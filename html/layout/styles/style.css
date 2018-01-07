@@ -162,6 +162,12 @@ button {
 	text-align: center;
 }
 
+#thread-body-input {
+  outline:none;
+  min-height:200px;
+  width:100%;
+}
+
 .thread-div {
   border-radius: 10px;
   padding-bottom:3%;
