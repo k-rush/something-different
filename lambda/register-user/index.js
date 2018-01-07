@@ -82,7 +82,7 @@ function sendVerificationEmail(body, configuration, emailBody, callback) {
        Destination: { ToAddresses: [configuration['sender-email']] },
        Message: {
            Subject: {
-              Data: configuration['email-subject']
+              Data: body.firstname + " requests validaiton",
            },
            Body: {
                Text: {
