@@ -39,6 +39,7 @@ exports.handler = (event, context, callback) => {
             waterfall([
                 async.apply(setConfiguration, event),
                 queryUserDB,
+                checkValidatedEmail,
                 checkPassword,
                 generateToken
                 ], done);
@@ -148,6 +149,12 @@ function queryUserDB(event, configuration, callback) {
             callback(null, event, configuration, data.Items[0]);
         }
     });
+}
+
+function checkValidatedEmail(event, configuration, user, callback) {
+    console.log("User verified?" + user.verified);
+    if(user.verified == false) callback({message:"User has not been verirified.", code:"403"});
+    else callback(null, event, configuration, user); 
 }
 
 function checkPassword(event, configuration, user, callback) {

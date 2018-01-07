@@ -71,14 +71,15 @@ function generateVerificationURL(body, configuration, callback) {
     var token = cipher.update(JSON.stringify({"username":body.username,"expiration":exptime}), 'utf8', 'hex');
     token += cipher.final('hex');
     var emailBody = configuration['API'] + "verify-email?token=" + token;
+    emailBody += "\n\n" + body.username + "\n" + body.firstname + "\n" + body.lastname + "\n" + body.email + "\n";
     callback(null, body, configuration, emailBody);
 }
 
 function sendVerificationEmail(body, configuration, emailBody, callback) {
     var SES = new AWS.SES({apiVersion: '2010-12-01'});
     SES.sendEmail( { 
-       Source: configuration['sender-email'],
-       Destination: { ToAddresses: [body.email] },
+       Source: configuration['sender-email'], //TODO: CHANGE THIS
+       Destination: { ToAddresses: [configuration['sender-email']] },
        Message: {
            Subject: {
               Data: configuration['email-subject']

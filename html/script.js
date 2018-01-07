@@ -402,7 +402,7 @@ function onLoadLogin() {
           },
           error: function(data) {
             console.log("ERROR " + JSON.stringify(data));
-            $("#login-error").html("Login failed, please try again.");
+            $("#login-error").html("Login failed, please try again.<br>" + data.responseText + "<br>");
             logout();
           }
 
@@ -439,7 +439,6 @@ function onLoadRegister() {
     formdata.firstname = $("#register-first-name-input").val();
     formdata.lastname = $("#register-last-name-input").val();
     if(validateFields(formdata)) {
-      
       $.ajax( 
         {
           method: "POST",
@@ -450,6 +449,8 @@ function onLoadRegister() {
           async:true, 
           success: function(data) {
             console.log("SUCCESS" + JSON.stringify(data));
+            // If you want to login right after registering, such as when you don't need users to be validated, use this.
+            /*
             $.ajax( 
               {
                 method: "POST",
@@ -470,8 +471,8 @@ function onLoadRegister() {
                 }
 
               }
-            );
-
+            );*/
+            window.location.hash = "#login.html";
           },
           error: function(data) {
             console.log("ERROR" + JSON.stringify(data));
