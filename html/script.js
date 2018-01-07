@@ -195,7 +195,7 @@ function getReplies(formdata, repliesDiv) {
                 "<div class='row-fluid postedBy-div'> - " + element.PostedBy + "<br>" + new Date(parseInt(element.Time)).toLocaleString() + "</div>" +
             "</div><br>");
         } );
-        repliesDiv.append("<input id='b" + formdata.threadId + "' class='reply-body' type='textarea' /><br>" +
+        repliesDiv.append("<textarea id='b" + formdata.threadId + "' class='reply-body' /><br>" +
               "<input id='r" + formdata.threadId + "' class='reply-button' value='post' type='button' /></div>");
         
 

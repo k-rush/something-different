@@ -194,6 +194,13 @@ button {
   border-bottom:1px solid #999;
 }
 
+.reply-body {
+  margin:4px;
+  outline:none;
+  min-height:100px;
+  width:80%;
+}
+
 
 
 
