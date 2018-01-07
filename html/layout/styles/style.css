@@ -112,6 +112,10 @@ button {
         -ms-user-select: none;
 }
 
+#login-error {
+  color: #f22;
+}
+
 
 
 /********************** HOME ******************************/

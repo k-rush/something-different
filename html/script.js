@@ -402,7 +402,7 @@ function onLoadLogin() {
           },
           error: function(data) {
             console.log("ERROR " + JSON.stringify(data));
-            $("#login-error").html("Login failed, please try again.<br>" + data.responseText + "<br>");
+            $("#login-error").html(data.responseText + "<br>");
             logout();
           }
 

@@ -153,7 +153,7 @@ function queryUserDB(event, configuration, callback) {
 
 function checkValidatedEmail(event, configuration, user, callback) {
     console.log("User verified?" + user.verified);
-    if(user.verified == false) callback({message:"User has not been verirified.", code:"403"});
+    if(user.verified == false) callback({message:"Admin has not yet verified your account, please be patient", code:"403"});
     else callback(null, event, configuration, user); 
 }
 
@@ -181,4 +181,3 @@ function generateToken(event, configuration, user, callback) {
     
     callback(null,{"token":token});
 }
-
