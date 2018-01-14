@@ -9,9 +9,6 @@ while [[ $# -gt 0 ]]; do
         -i|--invalid)
         INVALID=1
         ;;
-        -t|--testuser)
-        TESTUSER=1
-        ;;
     esac
     # Shift after checking all the cases to get the next option
     shift

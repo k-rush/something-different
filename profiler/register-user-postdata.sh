@@ -20,11 +20,11 @@ done
 if [ $INVALID -eq 1 ]
 	then
 	#Invalid input, pass too short
-	echo '{"username":"testinvalid","password":"short","email":"somethingdifferenttest@gmail.com","firstname":"Kyle","lastname":"R"}'
+	echo '{"username":"testinvalid","password":"short","email":"somethingdifferenttest@gmail.com","firstname":"Invalid","lastname":"U"}'
 elif [ $TESTUSER -eq 1 ]
 	then
-	echo '{"username":"testuser","password":"password","email":"somethingdifferenttest@gmail.com","firstname":"Kyle","lastname":"R"}'
+	echo '{"username":"testuser","password":"password","email":"somethingdifferenttest@gmail.com","firstname":"Test","lastname":"U"}'
 else
 	RANDSTRING=`bash ./rand-string.sh`
-	echo '{"username":"'$RANDSTRING'","password":"1234567","email":"somethingdifferenttest@gmail.com","firstname":"Kyle","lastname":"R"}'
+	echo '{"username":"'$RANDSTRING'","password":"1234567","email":"somethingdifferenttest@gmail.com","firstname":"Rand","lastname":"U"}'
 fi

@@ -1,4 +1,7 @@
 #!/bin/bash
+#Script to test and time API
+# First it will test register-user, then login, get-users
+
 K=5;    
 api='https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/'
 registeruser="${api}register-user"

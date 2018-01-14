@@ -250,13 +250,13 @@ function saltAndHashPW(body, configuration, callback) {
     hash.update(body.password + salt);
     const hashedPass = hash.digest('hex');
 
-    console.log("USERNAME: " + body.username + "HASHED PASSWORD:" + hashedPass + " SALT: " + salt);
+    //console.log("USERNAME: " + body.username + "HASHED PASSWORD:" + hashedPass + " SALT: " + salt);
     callback(null, body, configuration, hashedPass, salt);                      
 }
 
 function putNewUser(body, configuration, hashedPass, salt, callback) {
     //Params used to put new user into database
-    console.log("Putting user into DB");
+    //console.log("Putting user into DB");
     var params = {
         TableName : configuration['user-table'],
         Item : {"username":body.username, "password":hashedPass, "salt":salt, "email":body.email, "firstname":body.firstname, "lastname":body.lastname, "verified":false, "searchField":body.username.toLowerCase()}

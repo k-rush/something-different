@@ -157,17 +157,18 @@ function checkValidatedEmail(event, configuration, user, callback) {
     else callback(null, event, configuration, user); 
 }
 
+//Hash password, check against DB
 function checkPassword(event, configuration, user, callback) {
     var body = JSON.parse(event.body);           
     //Compute new hash and compare it to the one in DB.
     const hash = crypto.createHash('sha256');
     hash.update(body.password + user.salt);
     if(user.password != hash.digest('hex')) {
-        console.log("Incorrect password");
+        //console.log("Incorrect password");
         callback({message:"Username or password incorrect.", code:"403"},user);
     }
     else {
-        console.log("Username + Password verified");
+        //console.log("Username + Password verified");
         callback(null, event, configuration, user);
     }
 }

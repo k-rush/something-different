@@ -1,4 +1,4 @@
-const API = "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/prod/";
+const API = "https://nkfpt8zca8.execute-api.us-west-2.amazonaws.com/prod/beta/";
 
 //Window hashchange function
 $(function() {
